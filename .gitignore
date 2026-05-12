@@ -10,6 +10,14 @@ models/
 coverage.xml
 .ruff_cache/
 .mypy_cache/
-.venv/
+venv/
 .DS_Store
+.kiro/
 
+# Local documentation with credentials (keep local only)
+CURRENT_STATUS.md
+DEPLOYMENT_STATUS.md
+RAILWAY_DEPLOYMENT_STEPS.md
+WHAT_TO_DO_NOW.md
+railway/PORT_FIX_APPLIED.md
+mlflow.db
