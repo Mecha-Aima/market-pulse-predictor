@@ -5,6 +5,7 @@ WORKDIR /app
 # Install system dependencies
 RUN apt-get update && apt-get install -y \
     curl \
+    bash \
     && rm -rf /var/lib/apt/lists/*
 
 # Install MLflow and dependencies
@@ -14,17 +15,17 @@ RUN pip install --no-cache-dir \
     boto3 \
     pymysql
 
+# Copy startup scripts
+COPY railway/start.sh /app/start.sh
+COPY railway/debug-start.sh /app/debug-start.sh
+RUN chmod +x /app/start.sh /app/debug-start.sh
+
 # Expose MLflow port (Railway will set $PORT)
 EXPOSE 5000
 
-# Health check
-HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+# Health check - use PORT if set, otherwise 5000
+HEALTHCHECK --interval=30s --timeout=10s --start-period=10s --retries=3 \
     CMD curl -f http://localhost:${PORT:-5000}/health || exit 1
 
-# Start MLflow server
-# Railway provides $PORT, $DATABASE_URL automatically
-CMD mlflow server \
-    --host 0.0.0.0 \
-    --port ${PORT:-5000} \
-    --backend-store-uri ${DATABASE_URL} \
-    --default-artifact-root ${ARTIFACT_ROOT:-s3://market-pulse-dvc/mlflow-artifacts}
+# Start MLflow server using the debug startup script
+CMD ["/app/debug-start.sh"]

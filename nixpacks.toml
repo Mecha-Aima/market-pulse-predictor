@@ -1,8 +1,8 @@
 [phases.setup]
-nixPkgs = ["python311", "curl"]
+nixPkgs = ["python311", "curl", "bash"]
 
 [phases.install]
 cmds = ["pip install mlflow==2.12.0 psycopg2-binary boto3 pymysql"]
 
 [start]
-cmd = "mlflow server --host 0.0.0.0 --port $PORT --backend-store-uri $DATABASE_URL --default-artifact-root ${ARTIFACT_ROOT:-s3://market-pulse-dvc/mlflow-artifacts}"
+cmd = "bash -c 'mlflow server --host 0.0.0.0 --port ${PORT:-5000} --backend-store-uri \"$DATABASE_URL\" --default-artifact-root \"${ARTIFACT_ROOT:-s3://market-pulse-dvc/mlflow-artifacts}\"'"
