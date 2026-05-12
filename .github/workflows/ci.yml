@@ -1,0 +1,11 @@
+name: Placeholder CI
+
+on:
+  workflow_dispatch:
+
+jobs:
+  placeholder:
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "Phase 8 CI workflow not implemented yet."
+

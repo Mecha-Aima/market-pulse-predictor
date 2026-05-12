@@ -1,0 +1,48 @@
+stages:
+  ingest:
+    cmd: python -m src.ingestion.run_all --lookback-hours 24
+    deps:
+      - src/ingestion/
+    outs:
+      - data/raw/
+    params:
+      - params.yaml:
+          - ingestion.target_tickers
+          - ingestion.lookback_hours
+
+  sentiment:
+    cmd: python -m src.sentiment.run_sentiment
+    deps:
+      - src/sentiment/
+      - data/raw/
+    outs:
+      - data/processed/
+    params:
+      - params.yaml:
+          - sentiment.method
+
+  features:
+    cmd: python -m src.features.run_features
+    deps:
+      - src/features/
+      - data/processed/
+    outs:
+      - data/features/
+    params:
+      - params.yaml:
+          - features.sequence_length
+          - features.train_ratio
+          - features.val_ratio
+
+  train:
+    cmd: python -m src.training.run_training
+    deps:
+      - src/models/
+      - src/training/
+      - data/features/
+    outs:
+      - models/
+    params:
+      - params.yaml:
+          - training
+

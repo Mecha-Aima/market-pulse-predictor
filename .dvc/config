@@ -1,0 +1,7 @@
+[core]
+    remote = s3remote
+
+['remote "s3remote"']
+    url = s3://<DVC_REMOTE_BUCKET>/dvc-store
+    region = us-east-1
+

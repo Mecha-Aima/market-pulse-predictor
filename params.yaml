@@ -1,0 +1,24 @@
+ingestion:
+  target_tickers: "AAPL,MSFT,GOOGL,AMZN,TSLA,SPY"
+  lookback_hours: 24
+
+sentiment:
+  method: "vader"
+
+features:
+  sequence_length: 24
+  train_ratio: 0.70
+  val_ratio: 0.15
+
+training:
+  epochs: 50
+  batch_size: 64
+  learning_rate: 0.001
+  hidden_size: 128
+  num_layers: 2
+  dropout: 0.2
+  early_stopping_patience: 7
+  task: "direction"
+  model: "lstm"
+  device: "auto"
+

@@ -1,0 +1,11 @@
+name: Placeholder CD
+
+on:
+  workflow_dispatch:
+
+jobs:
+  placeholder:
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "Phase 8 CD workflow not implemented yet."
+

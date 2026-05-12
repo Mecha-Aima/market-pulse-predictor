@@ -1,0 +1,1 @@
+"""Market pulse predictor package."""
