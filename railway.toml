@@ -3,8 +3,10 @@ builder = "DOCKERFILE"
 dockerfilePath = "railway/Dockerfile.mlflow"
 
 [deploy]
-# No need to specify startCommand - Dockerfile CMD will be used
+# No startCommand override — Dockerfile CMD (/app/debug-start.sh) is used.
+# debug-start.sh removes --serve-artifacts (root cause of /static-files 404)
+# and adds --gunicorn-opts "--workers 2 --timeout 120" for stability.
 healthcheckPath = "/health"
-healthcheckTimeout = 100
+healthcheckTimeout = 300
 restartPolicyType = "ON_FAILURE"
 restartPolicyMaxRetries = 10

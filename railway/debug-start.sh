@@ -35,14 +35,22 @@ echo "  Backend: PostgreSQL"
 echo "  Artifacts: $ARTIFACT_ROOT"
 echo ""
 
-# Start MLflow server in dev mode (uses Flask server which serves static files)
-# Note: --dev mode is used because gunicorn doesn't serve static files by default
+# NOTE: --serve-artifacts is intentionally REMOVED.
+#
+# Root cause of blank UI: MLflow's --serve-artifacts flag spawns an artifact
+# proxy process that conflicts with gunicorn's static file routing, causing
+# /static-files/* to return 404. The UI HTML loads fine but all JS/CSS assets
+# fail. Clients (Colab) can still write/read artifacts directly via S3 using
+# the ARTIFACT_ROOT URI — they don't need the server to proxy artifacts.
+#
+# --gunicorn-opts: 2 workers prevents resource contention on Railway's free tier,
+# --timeout 120 gives MLflow time to init the DB connection on cold start.
+
 exec mlflow server \
     --host 0.0.0.0 \
     --port "$PORT" \
     --backend-store-uri "$DATABASE_URL" \
     --default-artifact-root "$ARTIFACT_ROOT" \
-    --serve-artifacts \
+    --gunicorn-opts "--workers 2 --timeout 120" \
     --allowed-hosts "*" \
-    --cors-allowed-origins "*" \
-    --dev
+    --cors-allowed-origins "*"
