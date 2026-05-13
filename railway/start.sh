@@ -12,12 +12,11 @@ echo "Artifact root: $ARTIFACT_ROOT"
 # Start MLflow server
 # NOTE: --serve-artifacts intentionally omitted — it conflicts with gunicorn
 # static file routing and causes /static-files/* to 404 (blank UI).
-# Clients write artifacts directly to S3 via ARTIFACT_ROOT.
 #
-# MLflow 2.12.0 compatibility:
-#   - --allowed-hosts: added in 3.5.0, NOT available here
-#   - --cors-allowed-origins: conflicts with --gunicorn-opts, use env var instead
-#   - --workers: replaces --gunicorn-opts for worker count in uvicorn mode
+# MLflow 2.12.0 + gunicorn multi-worker = broken static file serving.
+# /static-files/static/js/*.js → 404. Root cause: WhiteNoise middleware
+# doesn't share state across gunicorn workers. Fix: --workers 1.
+# --gunicorn-opts passes --timeout 300 for Railway cold-start DB connections.
 
 export MLFLOW_SERVER_CORS_ALLOWED_ORIGINS="*"
 
@@ -26,4 +25,5 @@ exec mlflow server \
     --port "$PORT" \
     --backend-store-uri "$DATABASE_URL" \
     --default-artifact-root "${ARTIFACT_ROOT:-s3://market-pulse-dvc/mlflow-artifacts}" \
-    --workers "${MLFLOW_WORKERS:-2}"
+    --workers 1 \
+    --gunicorn-opts "--timeout 300"
