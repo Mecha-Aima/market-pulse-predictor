@@ -1,0 +1,29 @@
+{
+  "generated_at": "2026-05-12T10:42:43.799849",
+  "tickers": [
+    "AAPL",
+    "MSFT"
+  ],
+  "files": {
+    "raw": [
+      "yahoo_AAPL.parquet",
+      "yahoo_MSFT.parquet",
+      "news_AAPL.json",
+      "news_MSFT.json",
+      "reddit_AAPL.json",
+      "reddit_MSFT.json",
+      "stocktwits_AAPL.json",
+      "stocktwits_MSFT.json"
+    ],
+    "processed": [
+      "sentiment_AAPL.parquet",
+      "sentiment_MSFT.parquet"
+    ],
+    "features": [
+      "features_AAPL.parquet",
+      "features_MSFT.parquet"
+    ]
+  },
+  "total_size_bytes": 79584,
+  "total_size_mb": 0.08
+}

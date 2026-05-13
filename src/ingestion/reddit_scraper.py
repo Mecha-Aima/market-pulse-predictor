@@ -39,11 +39,22 @@ class RedditScraper(BaseScraper):
     def _build_client(self):
         if praw is None:
             return SimpleNamespace(subreddit=lambda _: SimpleNamespace(hot=lambda limit: []))
+        
+        # Check if credentials are configured
+        client_id = os.getenv("REDDIT_CLIENT_ID")
+        client_secret = os.getenv("REDDIT_CLIENT_SECRET")
+        username = os.getenv("REDDIT_USERNAME")
+        password = os.getenv("REDDIT_PASSWORD")
+        
+        if not all([client_id, client_secret, username, password]):
+            print("⚠️  Reddit credentials not configured - skipping Reddit scraper")
+            return SimpleNamespace(subreddit=lambda _: SimpleNamespace(hot=lambda limit: []))
+        
         return praw.Reddit(
-            client_id=os.getenv("REDDIT_CLIENT_ID"),
-            client_secret=os.getenv("REDDIT_CLIENT_SECRET"),
-            username=os.getenv("REDDIT_USERNAME"),
-            password=os.getenv("REDDIT_PASSWORD"),
+            client_id=client_id,
+            client_secret=client_secret,
+            username=username,
+            password=password,
             user_agent=os.getenv("REDDIT_USER_AGENT", "market-pulse-predictor/1.0"),
         )
 

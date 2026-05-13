@@ -1,8 +1,21 @@
 from pathlib import Path
+from typing import Dict, Any
 
 import pytest
 
-from src.api.main import app
+from tests.fixtures import (
+    load_all_fixtures,
+    load_price_data,
+    load_news_data,
+    load_reddit_data,
+    load_stocktwits_data,
+    load_sentiment_data,
+    load_features_data,
+    get_available_tickers
+)
+
+# Configure pytest-asyncio
+pytest_plugins = ('pytest_asyncio',)
 
 REQUIRED_ENV_KEYS = {
     "REDDIT_CLIENT_ID",
@@ -34,5 +47,55 @@ def project_root() -> Path:
 
 
 @pytest.fixture()
-def api_app():
-    return app
+def test_ticker() -> str:
+    """Provide a default test ticker."""
+    return 'AAPL'
+
+
+@pytest.fixture()
+def test_tickers() -> list:
+    """Provide list of available test tickers."""
+    return get_available_tickers()
+
+
+@pytest.fixture()
+def fixture_price_data(test_ticker: str):
+    """Load price data fixture."""
+    return load_price_data(test_ticker)
+
+
+@pytest.fixture()
+def fixture_news_data(test_ticker: str):
+    """Load news data fixture."""
+    return load_news_data(test_ticker)
+
+
+@pytest.fixture()
+def fixture_reddit_data(test_ticker: str):
+    """Load Reddit data fixture."""
+    return load_reddit_data(test_ticker)
+
+
+@pytest.fixture()
+def fixture_stocktwits_data(test_ticker: str):
+    """Load StockTwits data fixture."""
+    return load_stocktwits_data(test_ticker)
+
+
+@pytest.fixture()
+def fixture_sentiment_data(test_ticker: str):
+    """Load sentiment data fixture."""
+    return load_sentiment_data(test_ticker)
+
+
+@pytest.fixture()
+def fixture_features_data(test_ticker: str):
+    """Load features data fixture."""
+    return load_features_data(test_ticker)
+
+
+@pytest.fixture()
+def all_fixtures(test_ticker: str) -> Dict[str, Any]:
+    """Load all fixtures for a ticker."""
+    return load_all_fixtures(test_ticker)
+

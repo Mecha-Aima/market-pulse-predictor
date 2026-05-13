@@ -1,0 +1,162 @@
+[
+  {
+    "title": "Analysts upgrade AAPL stock rating",
+    "published": "2026-05-12T10:42:43.790479",
+    "source": "Bloomberg",
+    "url": "https://example.com/news/0",
+    "ticker": "AAPL",
+    "text": "Article about AAPL. Article about AAPL. Article about AAPL. Article about AAPL. Article about AAPL. Article about AAPL. Article about AAPL. Article about AAPL. Article about AAPL. Article about AAPL. "
+  },
+  {
+    "title": "AAPL announces new product launch",
+    "published": "2026-05-11T10:42:43.790479",
+    "source": "Reuters",
+    "url": "https://example.com/news/1",
+    "ticker": "AAPL",
+    "text": "Article about AAPL. Article about AAPL. Article about AAPL. Article about AAPL. Article about AAPL. Article about AAPL. Article about AAPL. Article about AAPL. Article about AAPL. Article about AAPL. "
+  },
+  {
+    "title": "AAPL expands into new markets",
+    "published": "2026-05-10T10:42:43.790479",
+    "source": "WSJ",
+    "url": "https://example.com/news/2",
+    "ticker": "AAPL",
+    "text": "Article about AAPL. Article about AAPL. Article about AAPL. Article about AAPL. Article about AAPL. Article about AAPL. Article about AAPL. Article about AAPL. Article about AAPL. Article about AAPL. "
+  },
+  {
+    "title": "AAPL CEO discusses future strategy",
+    "published": "2026-05-09T10:42:43.790479",
+    "source": "WSJ",
+    "url": "https://example.com/news/3",
+    "ticker": "AAPL",
+    "text": "Article about AAPL. Article about AAPL. Article about AAPL. Article about AAPL. Article about AAPL. Article about AAPL. Article about AAPL. Article about AAPL. Article about AAPL. Article about AAPL. "
+  },
+  {
+    "title": "Investors bullish on AAPL prospects",
+    "published": "2026-05-08T10:42:43.790479",
+    "source": "WSJ",
+    "url": "https://example.com/news/4",
+    "ticker": "AAPL",
+    "text": "Article about AAPL. Article about AAPL. Article about AAPL. Article about AAPL. Article about AAPL. Article about AAPL. Article about AAPL. Article about AAPL. Article about AAPL. Article about AAPL. "
+  },
+  {
+    "title": "Investors bullish on AAPL prospects",
+    "published": "2026-05-07T10:42:43.790479",
+    "source": "CNBC",
+    "url": "https://example.com/news/5",
+    "ticker": "AAPL",
+    "text": "Article about AAPL. Article about AAPL. Article about AAPL. Article about AAPL. Article about AAPL. Article about AAPL. Article about AAPL. Article about AAPL. Article about AAPL. Article about AAPL. "
+  },
+  {
+    "title": "AAPL stock reaches new high",
+    "published": "2026-05-06T10:42:43.790479",
+    "source": "CNBC",
+    "url": "https://example.com/news/6",
+    "ticker": "AAPL",
+    "text": "Article about AAPL. Article about AAPL. Article about AAPL. Article about AAPL. Article about AAPL. Article about AAPL. Article about AAPL. Article about AAPL. Article about AAPL. Article about AAPL. "
+  },
+  {
+    "title": "AAPL reports strong quarterly earnings",
+    "published": "2026-05-05T10:42:43.790479",
+    "source": "CNBC",
+    "url": "https://example.com/news/7",
+    "ticker": "AAPL",
+    "text": "Article about AAPL. Article about AAPL. Article about AAPL. Article about AAPL. Article about AAPL. Article about AAPL. Article about AAPL. Article about AAPL. Article about AAPL. Article about AAPL. "
+  },
+  {
+    "title": "AAPL CEO discusses future strategy",
+    "published": "2026-05-04T10:42:43.790479",
+    "source": "WSJ",
+    "url": "https://example.com/news/8",
+    "ticker": "AAPL",
+    "text": "Article about AAPL. Article about AAPL. Article about AAPL. Article about AAPL. Article about AAPL. Article about AAPL. Article about AAPL. Article about AAPL. Article about AAPL. Article about AAPL. "
+  },
+  {
+    "title": "Market volatility affects AAPL trading",
+    "published": "2026-05-03T10:42:43.790479",
+    "source": "WSJ",
+    "url": "https://example.com/news/9",
+    "ticker": "AAPL",
+    "text": "Article about AAPL. Article about AAPL. Article about AAPL. Article about AAPL. Article about AAPL. Article about AAPL. Article about AAPL. Article about AAPL. Article about AAPL. Article about AAPL. "
+  },
+  {
+    "title": "AAPL announces new product launch",
+    "published": "2026-05-02T10:42:43.790479",
+    "source": "Bloomberg",
+    "url": "https://example.com/news/10",
+    "ticker": "AAPL",
+    "text": "Article about AAPL. Article about AAPL. Article about AAPL. Article about AAPL. Article about AAPL. Article about AAPL. Article about AAPL. Article about AAPL. Article about AAPL. Article about AAPL. "
+  },
+  {
+    "title": "AAPL CEO discusses future strategy",
+    "published": "2026-05-01T10:42:43.790479",
+    "source": "CNBC",
+    "url": "https://example.com/news/11",
+    "ticker": "AAPL",
+    "text": "Article about AAPL. Article about AAPL. Article about AAPL. Article about AAPL. Article about AAPL. Article about AAPL. Article about AAPL. Article about AAPL. Article about AAPL. Article about AAPL. "
+  },
+  {
+    "title": "AAPL reports strong quarterly earnings",
+    "published": "2026-04-30T10:42:43.790479",
+    "source": "Reuters",
+    "url": "https://example.com/news/12",
+    "ticker": "AAPL",
+    "text": "Article about AAPL. Article about AAPL. Article about AAPL. Article about AAPL. Article about AAPL. Article about AAPL. Article about AAPL. Article about AAPL. Article about AAPL. Article about AAPL. "
+  },
+  {
+    "title": "AAPL CEO discusses future strategy",
+    "published": "2026-04-29T10:42:43.790479",
+    "source": "WSJ",
+    "url": "https://example.com/news/13",
+    "ticker": "AAPL",
+    "text": "Article about AAPL. Article about AAPL. Article about AAPL. Article about AAPL. Article about AAPL. Article about AAPL. Article about AAPL. Article about AAPL. Article about AAPL. Article about AAPL. "
+  },
+  {
+    "title": "Analysts upgrade AAPL stock rating",
+    "published": "2026-04-28T10:42:43.790479",
+    "source": "WSJ",
+    "url": "https://example.com/news/14",
+    "ticker": "AAPL",
+    "text": "Article about AAPL. Article about AAPL. Article about AAPL. Article about AAPL. Article about AAPL. Article about AAPL. Article about AAPL. Article about AAPL. Article about AAPL. Article about AAPL. "
+  },
+  {
+    "title": "AAPL faces regulatory challenges",
+    "published": "2026-04-27T10:42:43.790479",
+    "source": "CNBC",
+    "url": "https://example.com/news/15",
+    "ticker": "AAPL",
+    "text": "Article about AAPL. Article about AAPL. Article about AAPL. Article about AAPL. Article about AAPL. Article about AAPL. Article about AAPL. Article about AAPL. Article about AAPL. Article about AAPL. "
+  },
+  {
+    "title": "AAPL expands into new markets",
+    "published": "2026-04-26T10:42:43.790479",
+    "source": "CNBC",
+    "url": "https://example.com/news/16",
+    "ticker": "AAPL",
+    "text": "Article about AAPL. Article about AAPL. Article about AAPL. Article about AAPL. Article about AAPL. Article about AAPL. Article about AAPL. Article about AAPL. Article about AAPL. Article about AAPL. "
+  },
+  {
+    "title": "Analysts upgrade AAPL stock rating",
+    "published": "2026-04-25T10:42:43.790479",
+    "source": "WSJ",
+    "url": "https://example.com/news/17",
+    "ticker": "AAPL",
+    "text": "Article about AAPL. Article about AAPL. Article about AAPL. Article about AAPL. Article about AAPL. Article about AAPL. Article about AAPL. Article about AAPL. Article about AAPL. Article about AAPL. "
+  },
+  {
+    "title": "Investors bullish on AAPL prospects",
+    "published": "2026-04-24T10:42:43.790479",
+    "source": "WSJ",
+    "url": "https://example.com/news/18",
+    "ticker": "AAPL",
+    "text": "Article about AAPL. Article about AAPL. Article about AAPL. Article about AAPL. Article about AAPL. Article about AAPL. Article about AAPL. Article about AAPL. Article about AAPL. Article about AAPL. "
+  },
+  {
+    "title": "Concerns raised about AAPL valuation",
+    "published": "2026-04-23T10:42:43.790479",
+    "source": "Reuters",
+    "url": "https://example.com/news/19",
+    "ticker": "AAPL",
+    "text": "Article about AAPL. Article about AAPL. Article about AAPL. Article about AAPL. Article about AAPL. Article about AAPL. Article about AAPL. Article about AAPL. Article about AAPL. Article about AAPL. "
+  }
+]

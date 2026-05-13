@@ -14,4 +14,5 @@ exec mlflow server \
     --host 0.0.0.0 \
     --port "$PORT" \
     --backend-store-uri "$DATABASE_URL" \
-    --default-artifact-root "${ARTIFACT_ROOT:-s3://market-pulse-dvc/mlflow-artifacts}"
+    --default-artifact-root "${ARTIFACT_ROOT:-s3://market-pulse-dvc/mlflow-artifacts}" \
+    --static-prefix /

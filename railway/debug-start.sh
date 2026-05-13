@@ -40,4 +40,5 @@ exec mlflow server \
     --host 0.0.0.0 \
     --port "$PORT" \
     --backend-store-uri "$DATABASE_URL" \
-    --default-artifact-root "$ARTIFACT_ROOT"
+    --default-artifact-root "$ARTIFACT_ROOT" \
+    --static-prefix /

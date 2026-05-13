@@ -1,0 +1,272 @@
+[
+  {
+    "id": 0,
+    "body": "Message about $AAPL",
+    "created_at": "2026-05-12T10:42:43.791614",
+    "user": {
+      "username": "user_0"
+    },
+    "symbols": [
+      {
+        "symbol": "AAPL"
+      }
+    ],
+    "entities": {
+      "sentiment": {
+        "basic": "Bullish"
+      }
+    }
+  },
+  {
+    "id": 1,
+    "body": "Message about $AAPL",
+    "created_at": "2026-05-12T09:42:43.791614",
+    "user": {
+      "username": "user_1"
+    },
+    "symbols": [
+      {
+        "symbol": "AAPL"
+      }
+    ],
+    "entities": {
+      "sentiment": {
+        "basic": "Bullish"
+      }
+    }
+  },
+  {
+    "id": 2,
+    "body": "Message about $AAPL",
+    "created_at": "2026-05-12T08:42:43.791614",
+    "user": {
+      "username": "user_2"
+    },
+    "symbols": [
+      {
+        "symbol": "AAPL"
+      }
+    ],
+    "entities": {
+      "sentiment": {
+        "basic": "Bullish"
+      }
+    }
+  },
+  {
+    "id": 3,
+    "body": "Message about $AAPL",
+    "created_at": "2026-05-12T07:42:43.791614",
+    "user": {
+      "username": "user_3"
+    },
+    "symbols": [
+      {
+        "symbol": "AAPL"
+      }
+    ],
+    "entities": {
+      "sentiment": {
+        "basic": "Bearish"
+      }
+    }
+  },
+  {
+    "id": 4,
+    "body": "Message about $AAPL",
+    "created_at": "2026-05-12T06:42:43.791614",
+    "user": {
+      "username": "user_4"
+    },
+    "symbols": [
+      {
+        "symbol": "AAPL"
+      }
+    ],
+    "entities": {
+      "sentiment": {
+        "basic": "Bearish"
+      }
+    }
+  },
+  {
+    "id": 5,
+    "body": "Message about $AAPL",
+    "created_at": "2026-05-12T05:42:43.791614",
+    "user": {
+      "username": "user_5"
+    },
+    "symbols": [
+      {
+        "symbol": "AAPL"
+      }
+    ],
+    "entities": {
+      "sentiment": {
+        "basic": "Bearish"
+      }
+    }
+  },
+  {
+    "id": 6,
+    "body": "Message about $AAPL",
+    "created_at": "2026-05-12T04:42:43.791614",
+    "user": {
+      "username": "user_6"
+    },
+    "symbols": [
+      {
+        "symbol": "AAPL"
+      }
+    ],
+    "entities": {
+      "sentiment": {
+        "basic": "Bearish"
+      }
+    }
+  },
+  {
+    "id": 7,
+    "body": "Message about $AAPL",
+    "created_at": "2026-05-12T03:42:43.791614",
+    "user": {
+      "username": "user_7"
+    },
+    "symbols": [
+      {
+        "symbol": "AAPL"
+      }
+    ],
+    "entities": {
+      "sentiment": {
+        "basic": "Bearish"
+      }
+    }
+  },
+  {
+    "id": 8,
+    "body": "Message about $AAPL",
+    "created_at": "2026-05-12T02:42:43.791614",
+    "user": {
+      "username": "user_8"
+    },
+    "symbols": [
+      {
+        "symbol": "AAPL"
+      }
+    ],
+    "entities": {
+      "sentiment": {
+        "basic": "Bearish"
+      }
+    }
+  },
+  {
+    "id": 9,
+    "body": "Message about $AAPL",
+    "created_at": "2026-05-12T01:42:43.791614",
+    "user": {
+      "username": "user_9"
+    },
+    "symbols": [
+      {
+        "symbol": "AAPL"
+      }
+    ],
+    "entities": {
+      "sentiment": {
+        "basic": "Bullish"
+      }
+    }
+  },
+  {
+    "id": 10,
+    "body": "Message about $AAPL",
+    "created_at": "2026-05-12T00:42:43.791614",
+    "user": {
+      "username": "user_10"
+    },
+    "symbols": [
+      {
+        "symbol": "AAPL"
+      }
+    ],
+    "entities": {
+      "sentiment": {
+        "basic": "Bearish"
+      }
+    }
+  },
+  {
+    "id": 11,
+    "body": "Message about $AAPL",
+    "created_at": "2026-05-11T23:42:43.791614",
+    "user": {
+      "username": "user_11"
+    },
+    "symbols": [
+      {
+        "symbol": "AAPL"
+      }
+    ],
+    "entities": {
+      "sentiment": {
+        "basic": "Bullish"
+      }
+    }
+  },
+  {
+    "id": 12,
+    "body": "Message about $AAPL",
+    "created_at": "2026-05-11T22:42:43.791614",
+    "user": {
+      "username": "user_12"
+    },
+    "symbols": [
+      {
+        "symbol": "AAPL"
+      }
+    ],
+    "entities": {
+      "sentiment": {
+        "basic": "Bullish"
+      }
+    }
+  },
+  {
+    "id": 13,
+    "body": "Message about $AAPL",
+    "created_at": "2026-05-11T21:42:43.791614",
+    "user": {
+      "username": "user_13"
+    },
+    "symbols": [
+      {
+        "symbol": "AAPL"
+      }
+    ],
+    "entities": {
+      "sentiment": {
+        "basic": "Bearish"
+      }
+    }
+  },
+  {
+    "id": 14,
+    "body": "Message about $AAPL",
+    "created_at": "2026-05-11T20:42:43.791614",
+    "user": {
+      "username": "user_14"
+    },
+    "symbols": [
+      {
+        "symbol": "AAPL"
+      }
+    ],
+    "entities": {
+      "sentiment": {
+        "basic": "Bullish"
+      }
+    }
+  }
+]

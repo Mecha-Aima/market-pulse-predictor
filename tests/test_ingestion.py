@@ -195,12 +195,31 @@ def test_reddit_scraper_ticker_matching(tmp_path, monkeypatch) -> None:
             return FakeSubreddit()
 
     monkeypatch.setenv("TARGET_TICKERS", "AAPL,MSFT")
+    monkeypatch.setenv("REDDIT_CLIENT_ID", "test_client_id")
+    monkeypatch.setenv("REDDIT_CLIENT_SECRET", "test_client_secret")
+    monkeypatch.setenv("REDDIT_USERNAME", "test_username")
+    monkeypatch.setenv("REDDIT_PASSWORD", "test_password")
     monkeypatch.setattr(reddit_scraper, "praw", SimpleNamespace(Reddit=lambda **_: FakeReddit()))
 
     records = reddit_scraper.RedditScraper().fetch("AAPL", 24)
 
     assert any(record["ticker"] == "AAPL" for record in records)
     assert records[0]["source"] == "reddit"
+
+
+def test_reddit_scraper_handles_missing_credentials(tmp_path, monkeypatch) -> None:
+    from src.ingestion import reddit_scraper
+
+    monkeypatch.chdir(tmp_path)
+    monkeypatch.setenv("TARGET_TICKERS", "AAPL,MSFT")
+    monkeypatch.delenv("REDDIT_CLIENT_ID", raising=False)
+    monkeypatch.delenv("REDDIT_CLIENT_SECRET", raising=False)
+    monkeypatch.delenv("REDDIT_USERNAME", raising=False)
+    monkeypatch.delenv("REDDIT_PASSWORD", raising=False)
+
+    records = reddit_scraper.RedditScraper().fetch("AAPL", 24)
+
+    assert records == []
 
 
 def test_stocktwits_returns_records_for_valid_ticker(tmp_path, monkeypatch) -> None:

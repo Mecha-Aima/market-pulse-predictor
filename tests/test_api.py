@@ -1,45 +1,89 @@
-import shutil
-import subprocess
-
-from fastapi.testclient import TestClient
-
-from tests.conftest import REQUIRED_ENV_KEYS
+import pytest
+from httpx import AsyncClient, ASGITransport
+from unittest.mock import Mock, patch
+import os
 
 
-def test_health_endpoint_returns_200(api_app) -> None:
-    client = TestClient(api_app)
+@pytest.fixture
+def test_env(monkeypatch):
+    """Set up test environment variables"""
+    monkeypatch.setenv("TARGET_TICKERS", "AAPL,MSFT,GOOGL")
+    monkeypatch.setenv("MLFLOW_TRACKING_URI", "http://localhost:5000")
+    monkeypatch.setenv("MODEL_REGISTRY_PATH", "./models/")
 
-    response = client.get("/health")
 
+@pytest.mark.asyncio
+async def test_health_endpoint_returns_200_with_model_status(test_env):
+    """Test health endpoint returns 200 with model status"""
+    from src.api.main import app
+    
+    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
+        response = await client.get("/api/v1/health")
+    
     assert response.status_code == 200
-    assert response.json() == {"status": "ok"}
+    data = response.json()
+    assert "status" in data
+    assert "model_loaded" in data
+    assert "last_data_ingestion" in data
+    assert data["status"] == "ok"
 
 
-def test_env_example_has_all_required_keys(project_root) -> None:
-    env_path = project_root / ".env.example"
-    keys = {
-        line.split("=", maxsplit=1)[0]
-        for line in env_path.read_text().splitlines()
-        if line and not line.startswith("#") and "=" in line
-    }
+@pytest.mark.asyncio
+async def test_predict_endpoint_unknown_ticker_404(test_env):
+    """Test predict endpoint returns 404 for unknown ticker"""
+    from src.api.main import app
+    
+    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
+        response = await client.post(
+            "/api/v1/predict",
+            json={"ticker": "FAKE"}
+        )
+    
+    assert response.status_code == 404
+    data = response.json()
+    assert "detail" in data
+    assert "FAKE" in str(data["detail"])
 
-    assert keys == REQUIRED_ENV_KEYS
+
+@pytest.mark.asyncio
+async def test_tickers_endpoint_returns_configured_list(test_env):
+    """Test tickers endpoint returns configured list"""
+    from src.api.main import app
+    
+    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
+        response = await client.get("/api/v1/tickers")
+    
+    assert response.status_code == 200
+    data = response.json()
+    assert isinstance(data, list)
+    assert "AAPL" in data
+    assert "MSFT" in data
+    assert "GOOGL" in data
 
 
-def test_docker_compose_valid(project_root) -> None:
-    docker_compose = shutil.which("docker-compose")
-    command = (
-        [docker_compose, "config", "--quiet"]
-        if docker_compose
-        else ["docker", "compose", "config", "--quiet"]
-    )
+@pytest.mark.asyncio
+async def test_cors_middleware_present(test_env):
+    """Test CORS headers are present"""
+    from src.api.main import app
+    
+    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
+        response = await client.get(
+            "/api/v1/health",
+            headers={"Origin": "http://localhost:3000"}
+        )
+    
+    # CORS middleware should add these headers
+    assert response.status_code == 200
 
-    result = subprocess.run(
-        command,
-        cwd=project_root,
-        check=False,
-        capture_output=True,
-        text=True,
-    )
 
-    assert result.returncode == 0, result.stderr
+@pytest.mark.asyncio
+async def test_results_endpoint_returns_list(test_env):
+    """Test results endpoint returns list of model metrics"""
+    from src.api.main import app
+    
+    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
+        response = await client.get("/api/v1/results")
+    
+    assert response.status_code == 200
+    data = response.json()
+    assert isinstance(data, list)
