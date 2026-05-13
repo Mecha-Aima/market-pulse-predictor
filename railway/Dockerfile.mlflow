@@ -2,10 +2,11 @@ FROM python:3.11-slim
 
 WORKDIR /app
 
-# Install system dependencies
+# Install system dependencies — nginx is the key addition
 RUN apt-get update && apt-get install -y \
     curl \
     bash \
+    nginx \
     && rm -rf /var/lib/apt/lists/*
 
 # Install MLflow and dependencies
@@ -15,17 +16,31 @@ RUN pip install --no-cache-dir \
     boto3 \
     pymysql
 
-# Copy startup scripts
+# ── Locate MLflow's built UI static assets ───────────────────────────────────
+# MLflow serves the React UI from: <mlflow_package>/server/js/build/
+# The /static-files/<path> Flask route calls send_from_directory(app.static_folder, path)
+# where static_folder = "js/build" (relative to mlflow/server/).
+# Files directly under js/build/ (index.html, favicon.ico) work fine.
+# Files under js/build/static/ (JS/CSS chunks) hit Flask's built-in /static/ route
+# which shadows send_from_directory and returns 404.
+# Fix: nginx serves /static-files/static/ directly from the filesystem.
+RUN MLFLOW_STATIC=$(python -c "import mlflow, os; print(os.path.join(os.path.dirname(mlflow.__file__), 'server', 'js', 'build'))") && \
+    echo "MLflow static dir: $MLFLOW_STATIC" && \
+    ls "$MLFLOW_STATIC/static/" && \
+    echo "MLFLOW_STATIC_DIR=$MLFLOW_STATIC" >> /etc/environment && \
+    ln -s "$MLFLOW_STATIC" /mlflow-static
+
+# Copy startup scripts and nginx config
 COPY railway/start.sh /app/start.sh
 COPY railway/debug-start.sh /app/debug-start.sh
+COPY railway/nginx.conf /app/nginx.conf
 RUN chmod +x /app/start.sh /app/debug-start.sh
 
-# Expose MLflow port (Railway will set $PORT)
-EXPOSE 5000
+# Expose the port Railway will route to (nginx listens here)
+EXPOSE 8080
 
-# Health check - use PORT if set, otherwise 5000
-HEALTHCHECK --interval=30s --timeout=10s --start-period=10s --retries=3 \
-    CMD curl -f http://localhost:${PORT:-5000}/health || exit 1
+# Health check hits nginx → proxied to MLflow
+HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=5 \
+    CMD curl -f http://localhost:${PORT:-8080}/health || exit 1
 
-# Start MLflow server using the debug startup script
 CMD ["/app/debug-start.sh"]
