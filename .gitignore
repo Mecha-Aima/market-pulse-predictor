@@ -5,7 +5,7 @@ __pycache__/
 .pytest_cache/
 mlruns/
 *.pyc
-models/
+/models/
 .coverage
 coverage.xml
 .ruff_cache/

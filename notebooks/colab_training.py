@@ -33,9 +33,28 @@ from google.colab import drive
 drive.mount('/content/drive')
 
 # %%
-# Clone your repository
+# Clone your repository and fix sys.path
+# %cd changes os.getcwd() but Colab does NOT add it to sys.path automatically,
+# so `from src.models...` would fail without this.
 !git clone https://github.com/Mecha-Aima/market-pulse-predictor.git
 %cd market-pulse-predictor
+
+import sys, os
+
+# Use a hardcoded path — os.getcwd() can be unreliable mid-session
+REPO = '/content/market-pulse-predictor'
+if REPO not in sys.path:
+    sys.path.insert(0, REPO)
+
+# Evict any stale src.* entries from the module cache.
+# A failed import leaves a partially-initialized 'src' package in sys.modules;
+# subsequent imports reuse that broken state even after sys.path is corrected.
+for key in list(sys.modules.keys()):
+    if key == 'src' or key.startswith('src.'):
+        del sys.modules[key]
+
+print(f"✅ sys.path[0] = {sys.path[0]}")
+print(f"✅ src.* module cache cleared")
 
 # %%
 # Set environment variables for Railway MLflow
