@@ -11,6 +11,7 @@ echo "Artifact root: $ARTIFACT_ROOT"
 
 # Start MLflow server with expanded variables
 # Railway provides RAILWAY_PUBLIC_DOMAIN or we use wildcard for Railway domains
+# Using --dev mode because gunicorn doesn't serve static files by default
 exec mlflow server \
     --host 0.0.0.0 \
     --port "$PORT" \
@@ -18,4 +19,5 @@ exec mlflow server \
     --default-artifact-root "${ARTIFACT_ROOT:-s3://market-pulse-dvc/mlflow-artifacts}" \
     --serve-artifacts \
     --allowed-hosts "*" \
-    --cors-allowed-origins "*"
+    --cors-allowed-origins "*" \
+    --dev

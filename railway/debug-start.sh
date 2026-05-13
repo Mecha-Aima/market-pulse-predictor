@@ -35,8 +35,8 @@ echo "  Backend: PostgreSQL"
 echo "  Artifacts: $ARTIFACT_ROOT"
 echo ""
 
-# Start MLflow server
-# Railway provides RAILWAY_PUBLIC_DOMAIN or we use wildcard for Railway domains
+# Start MLflow server in dev mode (uses Flask server which serves static files)
+# Note: --dev mode is used because gunicorn doesn't serve static files by default
 exec mlflow server \
     --host 0.0.0.0 \
     --port "$PORT" \
@@ -44,4 +44,5 @@ exec mlflow server \
     --default-artifact-root "$ARTIFACT_ROOT" \
     --serve-artifacts \
     --allowed-hosts "*" \
-    --cors-allowed-origins "*"
+    --cors-allowed-origins "*" \
+    --dev

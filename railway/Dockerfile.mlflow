@@ -13,7 +13,8 @@ RUN pip install --no-cache-dir \
     mlflow==2.12.0 \
     psycopg2-binary \
     boto3 \
-    pymysql
+    pymysql \
+    waitress
 
 # Copy startup scripts
 COPY railway/start.sh /app/start.sh
