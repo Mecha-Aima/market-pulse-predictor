@@ -10,9 +10,12 @@ echo "Database: ${DATABASE_URL:0:20}..."
 echo "Artifact root: $ARTIFACT_ROOT"
 
 # Start MLflow server with expanded variables
+# Railway provides RAILWAY_PUBLIC_DOMAIN or we use wildcard for Railway domains
 exec mlflow server \
     --host 0.0.0.0 \
     --port "$PORT" \
     --backend-store-uri "$DATABASE_URL" \
     --default-artifact-root "${ARTIFACT_ROOT:-s3://market-pulse-dvc/mlflow-artifacts}" \
-    --serve-artifacts
+    --serve-artifacts \
+    --allowed-hosts "*" \
+    --cors-allowed-origins "*"

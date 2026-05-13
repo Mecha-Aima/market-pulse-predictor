@@ -36,9 +36,12 @@ echo "  Artifacts: $ARTIFACT_ROOT"
 echo ""
 
 # Start MLflow server
+# Railway provides RAILWAY_PUBLIC_DOMAIN or we use wildcard for Railway domains
 exec mlflow server \
     --host 0.0.0.0 \
     --port "$PORT" \
     --backend-store-uri "$DATABASE_URL" \
     --default-artifact-root "$ARTIFACT_ROOT" \
-    --serve-artifacts
+    --serve-artifacts \
+    --allowed-hosts "*" \
+    --cors-allowed-origins "*"
