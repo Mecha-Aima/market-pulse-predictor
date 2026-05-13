@@ -43,14 +43,19 @@ echo ""
 # fail. Clients (Colab) can still write/read artifacts directly via S3 using
 # the ARTIFACT_ROOT URI — they don't need the server to proxy artifacts.
 #
-# --gunicorn-opts: 2 workers prevents resource contention on Railway's free tier,
-# --timeout 120 gives MLflow time to init the DB connection on cold start.
+# IMPORTANT - MLflow 2.12.0 compatibility notes:
+#   1. --allowed-hosts was added in MLflow 3.5.0 — DO NOT use it here.
+#   2. --cors-allowed-origins is mutually exclusive with --gunicorn-opts in
+#      2.12.0; it only works in uvicorn/FastAPI mode. We set it via env var
+#      MLFLOW_SERVER_CORS_ALLOWED_ORIGINS so it applies at the app level.
+#   3. Worker count is controlled by MLFLOW_WORKERS env var (default: 2).
+
+# Set CORS via environment variable (compatible with all server modes in 2.12.0)
+export MLFLOW_SERVER_CORS_ALLOWED_ORIGINS="*"
 
 exec mlflow server \
     --host 0.0.0.0 \
     --port "$PORT" \
     --backend-store-uri "$DATABASE_URL" \
     --default-artifact-root "$ARTIFACT_ROOT" \
-    --gunicorn-opts "--workers 2 --timeout 120" \
-    --allowed-hosts "*" \
-    --cors-allowed-origins "*"
+    --workers "${MLFLOW_WORKERS:-2}"
