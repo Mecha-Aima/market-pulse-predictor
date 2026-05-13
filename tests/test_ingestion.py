@@ -72,8 +72,8 @@ def test_yahoo_finance_fetch_returns_list(monkeypatch) -> None:
             self.session = session
 
         def history(self, period: str, interval: str) -> pd.DataFrame:
-            assert period == "1d"
-            assert interval == "1h"
+            assert period == "1mo"
+            assert interval == "1d"
             return history
 
     monkeypatch.setattr(yahoo_finance, "yf", SimpleNamespace(Ticker=FakeTicker))
@@ -158,6 +158,14 @@ def test_news_rss_deduplication(tmp_path, monkeypatch) -> None:
             },
         ]
     )
+
+    # scraper calls httpx.get(url) first, then passes response.content to feedparser
+    class FakeHttpxResponse:
+        content = b"<rss/>"
+        def raise_for_status(self) -> None:
+            return None
+
+    monkeypatch.setattr(news_rss.httpx, "get", lambda *args, **kwargs: FakeHttpxResponse())
     monkeypatch.setattr(news_rss, "feedparser", SimpleNamespace(parse=lambda _: feed))
     monkeypatch.setenv("TARGET_TICKERS", "AAPL,MSFT")
 
@@ -170,111 +178,58 @@ def test_news_rss_deduplication(tmp_path, monkeypatch) -> None:
     assert json.loads(seen_path.read_text()) == ["reuters-1"]
 
 
-def test_reddit_scraper_ticker_matching(tmp_path, monkeypatch) -> None:
-    from src.ingestion import reddit_scraper
-
-    monkeypatch.chdir(tmp_path)
-    now = datetime.now(timezone.utc)
-    post = SimpleNamespace(
-        id="post-1",
-        title="I'm bullish on AAPL today",
-        selftext="Huge upside ahead.",
-        upvote_ratio=0.91,
-        created_utc=now.timestamp(),
-        permalink="/r/stocks/post-1",
-        comments=SimpleNamespace(replace_more=lambda limit=0: None, list=lambda: []),
-    )
-
-    class FakeSubreddit:
-        def hot(self, limit: int):
-            assert limit == 25
-            return [post]
-
-    class FakeReddit:
-        def subreddit(self, name: str):
-            return FakeSubreddit()
-
-    monkeypatch.setenv("TARGET_TICKERS", "AAPL,MSFT")
-    monkeypatch.setenv("REDDIT_CLIENT_ID", "test_client_id")
-    monkeypatch.setenv("REDDIT_CLIENT_SECRET", "test_client_secret")
-    monkeypatch.setenv("REDDIT_USERNAME", "test_username")
-    monkeypatch.setenv("REDDIT_PASSWORD", "test_password")
-    monkeypatch.setattr(reddit_scraper, "praw", SimpleNamespace(Reddit=lambda **_: FakeReddit()))
-
-    records = reddit_scraper.RedditScraper().fetch("AAPL", 24)
-
-    assert any(record["ticker"] == "AAPL" for record in records)
-    assert records[0]["source"] == "reddit"
-
-
-def test_reddit_scraper_handles_missing_credentials(tmp_path, monkeypatch) -> None:
-    from src.ingestion import reddit_scraper
-
-    monkeypatch.chdir(tmp_path)
-    monkeypatch.setenv("TARGET_TICKERS", "AAPL,MSFT")
-    monkeypatch.delenv("REDDIT_CLIENT_ID", raising=False)
-    monkeypatch.delenv("REDDIT_CLIENT_SECRET", raising=False)
-    monkeypatch.delenv("REDDIT_USERNAME", raising=False)
-    monkeypatch.delenv("REDDIT_PASSWORD", raising=False)
-
-    records = reddit_scraper.RedditScraper().fetch("AAPL", 24)
-
-    assert records == []
-
 
 def test_stocktwits_returns_records_for_valid_ticker(tmp_path, monkeypatch) -> None:
+    """StockTwits public API is defunct; scraper uses Finviz HTML news table."""
+    from src.ingestion import stocktwits_scraper
     from src.ingestion.stocktwits_scraper import StockTwitsScraper
 
     monkeypatch.chdir(tmp_path)
-    now = datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
+
+    # Minimal Finviz HTML that matches _ROW_RE
+    finviz_html = (
+        '<table id="news-table">'
+        '<tr><td align="right">May-13-24 09:30AM</td>'
+        '<td><a href="https://example.com/aapl-news">AAPL surges on earnings</a></td></tr>'
+        "</table>"
+    )
 
     class FakeResponse:
+        text = finviz_html
         def raise_for_status(self) -> None:
             return None
 
-        def json(self) -> dict:
-            return {
-                "messages": [
-                    {
-                        "id": 123,
-                        "body": "Bullish on AAPL",
-                        "created_at": now,
-                        "entities": {"sentiment": {"basic": "Bullish"}},
-                    }
-                ]
-            }
-
-    from src.ingestion import stocktwits_scraper
-
     monkeypatch.setattr(stocktwits_scraper.httpx, "get", lambda *args, **kwargs: FakeResponse())
-    monkeypatch.setattr(stocktwits_scraper, "sleep", lambda _: None)
 
     records = StockTwitsScraper().fetch("AAPL", 24)
 
     assert isinstance(records, list)
+    assert len(records) == 1
     assert records[0]["source"] == "stocktwits"
-    assert records[0]["score"] == "Bullish"
+    assert records[0]["text"] == "AAPL surges on earnings"
+    assert records[0]["ticker"] == "AAPL"
 
 
-def test_alphavantage_returns_news_with_sentiment(monkeypatch) -> None:
+
+def test_alphavantage_returns_news_with_sentiment(monkeypatch, tmp_path) -> None:
+    """AlphaVantage scraper now fetches OVERVIEW (fundamentals), not news feed."""
     from src.ingestion import alphavantage_scraper
 
+    monkeypatch.chdir(tmp_path)
+
     payload = {
-        "feed": [
-            {
-                "title": "Apple rises on earnings",
-                "summary": "Strong quarter for Apple.",
-                "url": "https://example.com/apple-news",
-                "time_published": "20260512T120000",
-                "ticker_sentiment": [
-                    {
-                        "ticker": "AAPL",
-                        "ticker_sentiment_label": "Bullish",
-                        "ticker_sentiment_score": "0.77",
-                    }
-                ],
-            }
-        ]
+        "Symbol": "AAPL",
+        "MarketCapitalization": "2800000000000",
+        "PERatio": "28.5",
+        "EPS": "6.14",
+        "DividendYield": "0.005",
+        "52WeekHigh": "198.23",
+        "52WeekLow": "124.17",
+        "50DayMovingAverage": "175.00",
+        "200DayMovingAverage": "165.00",
+        "Beta": "1.25",
+        "ProfitMargin": "0.245",
+        "RevenuePerShareTTM": "23.89",
     }
 
     class FakeResponse:
@@ -285,15 +240,15 @@ def test_alphavantage_returns_news_with_sentiment(monkeypatch) -> None:
             return payload
 
     monkeypatch.setenv("ALPHAVANTAGE_API_KEY", "demo")
-    monkeypatch.setenv("TARGET_TICKERS", "AAPL,MSFT")
     monkeypatch.setattr(alphavantage_scraper.httpx, "get", lambda *args, **kwargs: FakeResponse())
 
-    records = alphavantage_scraper.AlphaVantageNewsScraper().fetch("MARKET", 24)
+    records = alphavantage_scraper.AlphaVantageNewsScraper().fetch("AAPL", 24)
 
     assert len(records) == 1
-    assert records[0]["source"] == "alphavantage_news"
-    assert records[0]["av_sentiment_label"] == "Bullish"
-    assert records[0]["av_sentiment_score"] == 0.77
+    assert records[0]["source"] == "alphavantage_fundamentals"
+    assert records[0]["ticker"] == "AAPL"
+    assert records[0]["av_peratio"] == 28.5
+    assert records[0]["av_eps"] == 6.14
 
 
 @pytest.mark.integration

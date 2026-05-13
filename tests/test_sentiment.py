@@ -10,7 +10,7 @@ def make_record(text: str | None) -> dict:
     timestamp = datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
     return {
         "id": "record-1",
-        "source": "reddit",
+        "source": "news_rss",
         "ticker": "AAPL",
         "timestamp": timestamp,
         "text": text,
@@ -73,7 +73,7 @@ def test_run_sentiment_writes_parquet(tmp_path, monkeypatch) -> None:
     from src.sentiment import run_sentiment
 
     monkeypatch.chdir(tmp_path)
-    raw_dir = tmp_path / "data" / "raw" / "reddit"
+    raw_dir = tmp_path / "data" / "raw" / "news_rss"
     raw_dir.mkdir(parents=True)
     raw_path = raw_dir / "AAPL_20240115T140000Z.json"
     raw_path.write_text(json.dumps([make_record("AAPL is climbing quickly.")]))

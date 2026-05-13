@@ -48,7 +48,7 @@ fi
 # Create necessary directories
 echo "Creating data directories..."
 mkdir -p data/raw data/processed data/features models
-mkdir -p data/raw/yahoo data/raw/news_rss data/raw/reddit data/raw/stocktwits data/raw/alphavantage
+mkdir -p data/raw/yahoo data/raw/news_rss data/raw/stocktwits data/raw/alphavantage data/raw/finnhub
 echo "✓ Directories created"
 
 # Generate Airflow keys if not in .env
@@ -70,7 +70,7 @@ echo ""
 echo "Next steps:"
 echo "1. Activate virtual environment: source venv/bin/activate"
 echo "2. Fill in API keys in .env file:"
-echo "   - REDDIT_CLIENT_ID, REDDIT_CLIENT_SECRET, REDDIT_USERNAME, REDDIT_PASSWORD"
+echo "   - FINNHUB_API_KEY"
 echo "   - ALPHAVANTAGE_API_KEY"
 echo "   - AWS credentials (optional for local dev)"
 echo "3. Run tests to verify setup: pytest tests/ -v"

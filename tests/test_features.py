@@ -42,8 +42,8 @@ def test_sentiment_aggregation_correct_counts() -> None:
     builder = TimeSeriesBuilder(sequence_length=3)
     now = datetime.now(timezone.utc).replace(minute=0, second=0, microsecond=0)
     records = [
-        make_processed_record(timestamp=now, source="reddit", sentiment_label="POSITIVE"),
-        make_processed_record(timestamp=now, source="reddit", sentiment_label="POSITIVE"),
+        make_processed_record(timestamp=now, source="news_rss", sentiment_label="POSITIVE"),
+        make_processed_record(timestamp=now, source="news_rss", sentiment_label="POSITIVE"),
         make_processed_record(timestamp=now, source="stocktwits", sentiment_label="POSITIVE"),
         make_processed_record(
             timestamp=now,
@@ -66,7 +66,7 @@ def test_feature_merge_no_price_no_row() -> None:
     builder = TimeSeriesBuilder(sequence_length=3)
     now = datetime.now(timezone.utc).replace(minute=0, second=0, microsecond=0)
     sentiment_frame = pd.DataFrame(
-        [make_processed_record(timestamp=now, source="reddit", sentiment_label="POSITIVE")]
+        [make_processed_record(timestamp=now, source="news_rss", sentiment_label="POSITIVE")]
     )
 
     merged = builder.build_feature_frame(sentiment_frame)
@@ -76,21 +76,22 @@ def test_feature_merge_no_price_no_row() -> None:
 
 def test_label_direction_correct() -> None:
     builder = TimeSeriesBuilder(sequence_length=3)
-    start = datetime.now(timezone.utc).replace(minute=0, second=0, microsecond=0)
+    # Spread records across distinct days so date_bucket yields multiple rows
+    base = datetime(2024, 1, 2, 12, 0, 0, tzinfo=timezone.utc)
     records = []
-    for offset in range(4):
-        timestamp = start + timedelta(hours=offset)
+    for offset in range(5):
+        ts = base + timedelta(days=offset)
         records.append(
             make_processed_record(
-                timestamp=timestamp,
-                source="reddit",
+                timestamp=ts,
+                source="news_rss",
                 sentiment_label="POSITIVE",
                 sentiment_score=0.6,
             )
         )
         records.append(
             make_processed_record(
-                timestamp=start + timedelta(hours=offset),
+                timestamp=ts,
                 source="yahoo_price",
                 text=None,
                 sentiment_label=None,
@@ -98,7 +99,7 @@ def test_label_direction_correct() -> None:
                 open_price=100 + offset,
                 high=101 + offset,
                 low=99 + offset,
-                close=100 + offset + (0.5 if offset == 1 else 0),
+                close=100 + offset + (0.5 if offset % 2 == 1 else -0.5),
                 volume=1000,
             )
         )
@@ -177,21 +178,22 @@ def test_sequence_shape() -> None:
 
 
 def synthetic_feature_frame(rows: int) -> pd.DataFrame:
-    start = datetime.now(timezone.utc).replace(minute=0, second=0, microsecond=0)
+    from datetime import date
+    start = date(2024, 1, 2)  # first trading day
     data = []
     for index in range(rows):
         data.append(
             {
                 "ticker": "AAPL",
-                "hour_bucket": start + timedelta(hours=index),
+                "date_bucket": start + timedelta(days=index),
+                "hour_bucket": None,  # retained for column exclusion test
                 "sentiment_positive_count": float(index % 3),
                 "sentiment_negative_count": float((index + 1) % 2),
                 "sentiment_neutral_count": 1.0,
                 "sentiment_score_mean": 0.1 * index,
                 "sentiment_score_std": 0.01 * index,
                 "total_mentions": float(index + 1),
-                "reddit_mentions": 1.0,
-                "twitter_mentions": 1.0,
+                "stocktwits_mentions": 1.0,
                 "news_mentions": 1.0,
                 "open": 100.0 + index,
                 "high": 101.0 + index,

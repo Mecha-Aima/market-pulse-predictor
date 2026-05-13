@@ -56,22 +56,6 @@ def load_news_data(ticker: str) -> List[Dict[str, Any]]:
         return json.load(f)
 
 
-def load_reddit_data(ticker: str) -> List[Dict[str, Any]]:
-    """
-    Load Reddit data fixture for a ticker.
-    
-    Args:
-        ticker: Stock ticker symbol (e.g., 'AAPL')
-        
-    Returns:
-        List of Reddit post dictionaries
-    """
-    path = RAW_DIR / f"reddit_{ticker}.json"
-    if not path.exists():
-        raise FileNotFoundError(f"Reddit data fixture not found for {ticker}")
-    with open(path, 'r') as f:
-        return json.load(f)
-
 
 def load_stocktwits_data(ticker: str) -> List[Dict[str, Any]]:
     """
@@ -139,7 +123,7 @@ def fixture_exists(ticker: str, data_type: str) -> bool:
     
     Args:
         ticker: Stock ticker symbol
-        data_type: One of 'price', 'news', 'reddit', 'stocktwits', 'sentiment', 'features'
+        data_type: One of 'price', 'news', 'stocktwits', 'sentiment', 'features'
         
     Returns:
         True if fixture exists, False otherwise
@@ -147,7 +131,6 @@ def fixture_exists(ticker: str, data_type: str) -> bool:
     paths = {
         'price': RAW_DIR / f"yahoo_{ticker}.parquet",
         'news': RAW_DIR / f"news_{ticker}.json",
-        'reddit': RAW_DIR / f"reddit_{ticker}.json",
         'stocktwits': RAW_DIR / f"stocktwits_{ticker}.json",
         'sentiment': PROCESSED_DIR / f"sentiment_{ticker}.parquet",
         'features': FEATURES_DIR / f"features_{ticker}.parquet",
@@ -178,9 +161,6 @@ def load_all_fixtures(ticker: str) -> Dict[str, Any]:
     
     if fixture_exists(ticker, 'news'):
         fixtures['news'] = load_news_data(ticker)
-    
-    if fixture_exists(ticker, 'reddit'):
-        fixtures['reddit'] = load_reddit_data(ticker)
     
     if fixture_exists(ticker, 'stocktwits'):
         fixtures['stocktwits'] = load_stocktwits_data(ticker)

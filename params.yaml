@@ -6,7 +6,7 @@ sentiment:
   method: "vader"
 
 features:
-  sequence_length: 24
+  sequence_length: 10  # 10 trading days (2 calendar weeks) per sequence
   train_ratio: 0.70
   val_ratio: 0.15
 

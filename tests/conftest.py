@@ -7,7 +7,6 @@ from tests.fixtures import (
     load_all_fixtures,
     load_price_data,
     load_news_data,
-    load_reddit_data,
     load_stocktwits_data,
     load_sentiment_data,
     load_features_data,
@@ -18,11 +17,7 @@ from tests.fixtures import (
 pytest_plugins = ('pytest_asyncio',)
 
 REQUIRED_ENV_KEYS = {
-    "REDDIT_CLIENT_ID",
-    "REDDIT_CLIENT_SECRET",
-    "REDDIT_USERNAME",
-    "REDDIT_PASSWORD",
-    "REDDIT_USER_AGENT",
+    "FINNHUB_API_KEY",
     "ALPHAVANTAGE_API_KEY",
     "MLFLOW_TRACKING_URI",
     "MLFLOW_EXPERIMENT_NAME",
@@ -69,11 +64,6 @@ def fixture_news_data(test_ticker: str):
     """Load news data fixture."""
     return load_news_data(test_ticker)
 
-
-@pytest.fixture()
-def fixture_reddit_data(test_ticker: str):
-    """Load Reddit data fixture."""
-    return load_reddit_data(test_ticker)
 
 
 @pytest.fixture()

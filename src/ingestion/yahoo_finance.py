@@ -34,14 +34,17 @@ class YahooFinanceScraper(BaseScraper):
     source_name = "yahoo"
 
     def __init__(self) -> None:
-        self.session = self._build_session()
+        pass  # yfinance 1.3+ manages its own curl_cffi session; don't inject one
 
     def fetch(self, ticker: str, lookback_hours: int) -> list[dict]:
         if yf is None or pd is None:
             raise RuntimeError("yfinance and pandas are required for Yahoo ingestion")
 
+        period, interval = self._period_interval(lookback_hours)
         client = self._build_ticker(ticker)
-        history = self._call_with_retry(lambda: client.history(period="1d", interval="1h"), ticker)
+        history = self._call_with_retry(
+            lambda: client.history(period=period, interval=interval), ticker
+        )
         news_items = self._call_with_retry(lambda: client.news or [], ticker)
         if history is None:
             return []
@@ -49,6 +52,22 @@ class YahooFinanceScraper(BaseScraper):
         records = self._build_price_records(ticker, history)
         records.extend(self._build_news_records(ticker, news_items, lookback_hours))
         return records
+
+    @staticmethod
+    def _period_interval(lookback_hours: int) -> tuple[str, str]:
+        """Map lookback hours to the best yfinance period+interval combination.
+
+        Always uses daily ('1d') bars to match the daily feature pipeline.
+        """
+        if lookback_hours <= 720:    # <= 30 days
+            return "1mo", "1d"
+        if lookback_hours <= 2160:   # <= 90 days
+            return "3mo", "1d"
+        if lookback_hours <= 8760:   # <= 1 year
+            return "1y", "1d"
+        if lookback_hours <= 17520:  # <= 2 years
+            return "2y", "1d"
+        return "5y", "1d"           # max free via yfinance
 
     def _build_session(self):
         cache_dir = self._raw_dir(self.source_name)
@@ -71,10 +90,9 @@ class YahooFinanceScraper(BaseScraper):
         return limiter_session
 
     def _build_ticker(self, ticker: str):
-        session = self.session
-        if session is None:
-            return yf.Ticker(ticker)
-        return yf.Ticker(ticker, session=session)
+        # Do NOT pass a session — yfinance 1.3+ uses curl_cffi internally
+        # and raises YFDataException if any custom session is injected.
+        return yf.Ticker(ticker)
 
     def _call_with_retry(self, operation, ticker: str):
         rate_limit_error = self._rate_limit_error()

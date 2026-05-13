@@ -18,60 +18,94 @@ class TimeSeriesBuilder:
 
     def aggregate_sentiment(self, processed_frame: pd.DataFrame) -> pd.DataFrame:
         frame = processed_frame.copy()
-        frame["hour_bucket"] = pd.to_datetime(frame["timestamp"], utc=True).dt.floor("h")
+        frame["date_bucket"] = pd.to_datetime(frame["timestamp"], format="ISO8601", utc=True).dt.date
         frame = frame[frame["text"].notna() & frame["sentiment_label"].notna()].copy()
         if frame.empty:
             return pd.DataFrame(
                 columns=[
                     "ticker",
-                    "hour_bucket",
+                    "date_bucket",
                     "sentiment_positive_count",
                     "sentiment_negative_count",
                     "sentiment_neutral_count",
                     "sentiment_score_mean",
                     "sentiment_score_std",
                     "total_mentions",
-                    "reddit_mentions",
-                    "twitter_mentions",
+                    "stocktwits_mentions",
                     "news_mentions",
                 ]
             )
 
         aggregated = (
-            frame.groupby(["ticker", "hour_bucket"], as_index=False)
+            frame.groupby(["ticker", "date_bucket"], as_index=False)
             .apply(self._aggregate_sentiment_group, include_groups=False)
-            .reset_index()
+            .reset_index(drop=True)
         )
-        if "level_2" in aggregated.columns:
-            aggregated = aggregated.drop(columns=["level_2"])
+        # Drop any stray index columns produced by groupby+apply
+        aggregated = aggregated.drop(columns=[c for c in aggregated.columns if c in {"level_0", "level_1", "level_2", "index"}])
         return aggregated
 
     def build_feature_frame(self, processed_frame: pd.DataFrame) -> pd.DataFrame:
         frame = processed_frame.copy()
-        frame["hour_bucket"] = pd.to_datetime(frame["timestamp"], utc=True).dt.floor("h")
+        ts = pd.to_datetime(frame["timestamp"], format="ISO8601", utc=True)
+        frame["hour_bucket"] = ts.dt.floor("h")
+        frame["date_bucket"] = ts.dt.date
+
         sentiment_features = self.aggregate_sentiment(frame)
         price_rows = frame[frame["source"] == "yahoo_price"].copy()
         if price_rows.empty or sentiment_features.empty:
             return pd.DataFrame()
 
         price_frame = (
-            price_rows.groupby(["ticker", "hour_bucket"], as_index=False)
+            price_rows.groupby(["ticker", "date_bucket"], as_index=False)
             .agg(
+                hour_bucket=("hour_bucket", "first"),
                 open=("open", "last"),
                 high=("high", "last"),
                 low=("low", "last"),
                 close=("close", "last"),
                 volume=("volume", "last"),
             )
-            .sort_values(["ticker", "hour_bucket"])
+            .sort_values(["ticker", "date_bucket"])
         )
         price_frame = self._add_price_features(price_frame)
-        merged = sentiment_features.merge(price_frame, on=["ticker", "hour_bucket"], how="inner")
-        merged = merged.sort_values(["ticker", "hour_bucket"]).reset_index(drop=True)
+
+        # Join technicals (rsi, macd, bb_*, atr, obv) keyed by ticker+date_bucket
+        tech_rows = frame[frame["source"] == "technicals"].copy()
+        if not tech_rows.empty:
+            tech_cols = ["ticker", "date_bucket"] + [
+                c for c in tech_rows.columns
+                if c in {"rsi", "macd", "macd_signal", "macd_hist",
+                         "bb_upper", "bb_mid", "bb_lower", "bb_width", "bb_pct",
+                         "atr", "obv"}
+            ]
+            tech_frame = (
+                tech_rows[tech_cols]
+                .groupby(["ticker", "date_bucket"], as_index=False)
+                .last()  # one row per ticker/day
+            )
+            price_frame = price_frame.merge(tech_frame, on=["ticker", "date_bucket"], how="left")
+            # Fill NaN technicals (warm-up rows) with 0
+            tech_feature_cols = [c for c in tech_cols if c not in {"ticker", "date_bucket"}]
+            for col in tech_feature_cols:
+                if col in price_frame.columns:
+                    price_frame[col] = price_frame[col].fillna(0.0)
+
+        # Left-join: keep all price days; fill missing sentiment with 0
+        merged = price_frame.merge(sentiment_features, on=["ticker", "date_bucket"], how="left")
+        sentiment_cols = [
+            "sentiment_positive_count", "sentiment_negative_count", "sentiment_neutral_count",
+            "sentiment_score_mean", "sentiment_score_std", "total_mentions",
+            "stocktwits_mentions", "news_mentions",
+        ]
+        for col in sentiment_cols:
+            if col in merged.columns:
+                merged[col] = merged[col].fillna(0)
+        merged = merged.sort_values(["ticker", "date_bucket"]).reset_index(drop=True)
         return self._add_labels(merged)
 
     def create_splits(self, feature_frame: pd.DataFrame) -> dict:
-        frame = feature_frame.sort_values(["ticker", "hour_bucket"]).reset_index(drop=True).copy()
+        frame = feature_frame.sort_values(["ticker", "date_bucket"]).reset_index(drop=True).copy()
         frame = frame.dropna(subset=["label_direction", "label_return", "label_volatility_spike"])
         feature_columns = [
             column
@@ -79,7 +113,9 @@ class TimeSeriesBuilder:
             if column
             not in {
                 "ticker",
+                "date_bucket",
                 "hour_bucket",
+                "index",           # guard against any reset_index() leaks
                 "label_direction",
                 "label_return",
                 "label_volatility_spike",
@@ -186,10 +222,9 @@ class TimeSeriesBuilder:
                 "sentiment_score_mean": float(group["sentiment_score"].mean()),
                 "sentiment_score_std": float(group["sentiment_score"].std(ddof=0) or 0.0),
                 "total_mentions": int(len(group)),
-                "reddit_mentions": int(group["source"].isin(["reddit", "reddit_comment"]).sum()),
-                "twitter_mentions": int(group["source"].isin(["stocktwits"]).sum()),
+                "stocktwits_mentions": int(group["source"].isin(["stocktwits"]).sum()),
                 "news_mentions": int(
-                    group["source"].isin(["news_rss", "yahoo_news", "alphavantage_news"]).sum()
+                    group["source"].isin(["news_rss", "yahoo_news", "alphavantage_news", "finnhub"]).sum()
                 ),
             }
         )
@@ -248,7 +283,7 @@ class TimeSeriesBuilder:
         y_volatility = []
         timestamps = []
         for _, ticker_frame in frame.groupby("ticker"):
-            ticker_frame = ticker_frame.sort_values("hour_bucket").reset_index(drop=True)
+            ticker_frame = ticker_frame.sort_values("date_bucket").reset_index(drop=True)
             for end_index in range(self.sequence_length - 1, len(ticker_frame)):
                 window = ticker_frame.iloc[end_index - self.sequence_length + 1 : end_index + 1]
                 sequences.append(window[feature_columns].to_numpy(dtype=float))
@@ -256,7 +291,7 @@ class TimeSeriesBuilder:
                 y_direction.append(int(target_row["label_direction"]))
                 y_return.append(float(target_row["label_return"]))
                 y_volatility.append(int(target_row["label_volatility_spike"]))
-                timestamps.append(target_row["hour_bucket"].to_pydatetime())
+                timestamps.append(pd.Timestamp(target_row["date_bucket"]))
         return (
             np.asarray(sequences, dtype=float),
             np.asarray(y_direction, dtype=int),

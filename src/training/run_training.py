@@ -134,7 +134,13 @@ def register_best_model(run_id: str, task_name: str, metrics: dict) -> None:
     try:
         model_version = mlflow.register_model(model_uri=model_uri, name=registered_name)
         client = MlflowClient()
-        if hasattr(client, "transition_model_version_stage"):
+        if hasattr(client, "set_registered_model_alias"):
+            client.set_registered_model_alias(
+                name=registered_name,
+                alias="Production",
+                version=model_version.version,
+            )
+        elif hasattr(client, "transition_model_version_stage"):
             client.transition_model_version_stage(
                 name=registered_name,
                 version=model_version.version,

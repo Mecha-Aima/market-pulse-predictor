@@ -1,109 +1,119 @@
 from datetime import datetime, timedelta
-from airflow import DAG
-from airflow.operators.python import PythonOperator
-from airflow.operators.bash import BashOperator
-import sys
+import os
 from pathlib import Path
+import sys
 
-# Add src to path
+from airflow import DAG
+from airflow.operators.bash import BashOperator
+from airflow.operators.python import PythonOperator
+
+# Add project root to path
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
+from src.ingestion.finnhub_scraper import FinnhubNewsScraper
+from src.ingestion.news_rss import NewsRSSScraper
+from src.ingestion.stocktwits_scraper import StockTwitsScraper
 from src.ingestion.yahoo_finance import YahooFinanceScraper
-from src.ingestion.reuters_rss import ReutersRSSScraper
-from src.ingestion.reddit_scraper import RedditScraper
-from src.ingestion.twitter_scraper import TwitterScraper
 
 default_args = {
-    'owner': 'airflow',
-    'depends_on_past': False,
-    'email_on_failure': False,
-    'email_on_retry': False,
-    'retries': 2,
-    'retry_delay': timedelta(minutes=5),
+    "owner": "airflow",
+    "depends_on_past": False,
+    "email_on_failure": False,
+    "email_on_retry": False,
+    "retries": 2,
+    "retry_delay": timedelta(minutes=5),
 }
 
+# Run once daily after market close (21:00 UTC = 5pm ET)
 dag = DAG(
-    'ingestion_dag',
+    "ingestion_dag",
     default_args=default_args,
-    description='Ingest data from all sources',
-    schedule_interval='*/30 * * * *',
+    description="Daily ingestion of price and sentiment data",
+    schedule_interval="0 21 * * 1-5",  # Mon-Fri at 21:00 UTC
     start_date=datetime(2024, 1, 1),
     catchup=False,
-    tags=['ingestion'],
+    tags=["ingestion"],
 )
 
+TICKERS = os.getenv("TARGET_TICKERS", "AAPL,MSFT,GOOGL,AMZN,TSLA,SPY").split(",")
+# Lookback 48h to capture any data missed by the previous run
+LOOKBACK_HOURS = 48
 
-def ingest_yahoo():
-    """Ingest data from Yahoo Finance"""
+
+def ingest_yahoo() -> None:
+    """Fetch daily OHLCV bars + Yahoo news for each ticker."""
     scraper = YahooFinanceScraper()
-    import os
-    tickers = os.getenv('TARGET_TICKERS', 'AAPL,MSFT,GOOGL,AMZN,TSLA,SPY').split(',')
-    for ticker in tickers:
-        records = scraper.fetch(ticker, lookback_hours=24)
+    for ticker in TICKERS:
+        records = scraper.fetch(ticker, lookback_hours=LOOKBACK_HOURS)
         if records:
-            scraper.save(records, 'yahoo', ticker)
+            scraper.save(records, source="yahoo_price", ticker=ticker)
 
 
-def ingest_reuters():
-    """Ingest data from Reuters RSS"""
-    scraper = ReutersRSSScraper()
-    records = scraper.fetch('MARKET', lookback_hours=24)
-    if records:
-        scraper.save(records, 'reuters', 'MARKET')
-
-
-def ingest_reddit():
-    """Ingest data from Reddit"""
-    scraper = RedditScraper()
-    import os
-    tickers = os.getenv('TARGET_TICKERS', 'AAPL,MSFT,GOOGL,AMZN,TSLA,SPY').split(',')
-    for ticker in tickers:
-        records = scraper.fetch(ticker, lookback_hours=24)
+def ingest_news_rss() -> None:
+    """Fetch RSS headlines for each ticker."""
+    scraper = NewsRSSScraper()
+    for ticker in TICKERS:
+        records = scraper.fetch(ticker, lookback_hours=LOOKBACK_HOURS)
         if records:
-            scraper.save(records, 'reddit', ticker)
+            scraper.save(records, source="news_rss", ticker=ticker)
 
 
-def ingest_twitter():
-    """Ingest data from Twitter"""
-    scraper = TwitterScraper()
-    import os
-    tickers = os.getenv('TARGET_TICKERS', 'AAPL,MSFT,GOOGL,AMZN,TSLA,SPY').split(',')
-    for ticker in tickers:
-        records = scraper.fetch(ticker, lookback_hours=24)
+def ingest_stocktwits() -> None:
+    """Fetch StockTwits messages for each ticker."""
+    scraper = StockTwitsScraper()
+    for ticker in TICKERS:
+        records = scraper.fetch(ticker, lookback_hours=LOOKBACK_HOURS)
         if records:
-            scraper.save(records, 'twitter', ticker)
+            scraper.save(records, source="stocktwits", ticker=ticker)
 
 
-# Define tasks
+def ingest_finnhub() -> None:
+    """Fetch Finnhub news/sentiment for each ticker."""
+    scraper = FinnhubNewsScraper()
+    for ticker in TICKERS:
+        records = scraper.fetch(ticker, lookback_hours=LOOKBACK_HOURS)
+        if records:
+            scraper.save(records, source="finnhub", ticker=ticker)
+
+
+# --- Tasks ---
 ingest_yahoo_task = PythonOperator(
-    task_id='ingest_yahoo',
+    task_id="ingest_yahoo",
     python_callable=ingest_yahoo,
     dag=dag,
 )
 
-ingest_reuters_task = PythonOperator(
-    task_id='ingest_reuters',
-    python_callable=ingest_reuters,
+ingest_news_rss_task = PythonOperator(
+    task_id="ingest_news_rss",
+    python_callable=ingest_news_rss,
     dag=dag,
 )
 
-ingest_reddit_task = PythonOperator(
-    task_id='ingest_reddit',
-    python_callable=ingest_reddit,
+ingest_stocktwits_task = PythonOperator(
+    task_id="ingest_stocktwits",
+    python_callable=ingest_stocktwits,
     dag=dag,
 )
 
-ingest_twitter_task = PythonOperator(
-    task_id='ingest_twitter',
-    python_callable=ingest_twitter,
+ingest_finnhub_task = PythonOperator(
+    task_id="ingest_finnhub",
+    python_callable=ingest_finnhub,
     dag=dag,
 )
 
 dvc_add_raw_task = BashOperator(
-    task_id='dvc_add_raw',
-    bash_command='cd /app && dvc add data/raw/ && git add data/raw.dvc && git commit -m "Update raw data" || true',
+    task_id="dvc_add_raw",
+    bash_command=(
+        'cd /app && dvc add data/raw/ && git add data/raw.dvc '
+        '&& git commit -m "chore: update raw data [skip ci]" || true'
+    ),
     dag=dag,
 )
 
-# Set dependencies: all ingestion tasks run in parallel, then DVC add
-[ingest_yahoo_task, ingest_reuters_task, ingest_reddit_task, ingest_twitter_task] >> dvc_add_raw_task
+# All ingestion tasks run in parallel, then DVC snapshots raw data
+[
+    ingest_yahoo_task,
+    ingest_news_rss_task,
+    ingest_stocktwits_task,
+    ingest_finnhub_task,
+] >> dvc_add_raw_task

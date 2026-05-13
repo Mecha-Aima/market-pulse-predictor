@@ -86,30 +86,6 @@ def generate_news_data(ticker: str, count: int = 20) -> list:
     return news
 
 
-def generate_reddit_data(ticker: str, count: int = 15) -> list:
-    """Generate synthetic Reddit data."""
-    sentiments = ['bullish', 'bearish', 'neutral']
-    
-    posts = []
-    base_date = datetime.now()
-    
-    for i in range(count):
-        date = base_date - timedelta(hours=i * 2)
-        sentiment = np.random.choice(sentiments)
-        
-        posts.append({
-            'id': f'reddit_{i}',
-            'title': f'Discussion about {ticker}',
-            'text': f'Post discussing {ticker} with {sentiment} sentiment. ' * 5,
-            'score': np.random.randint(1, 1000),
-            'num_comments': np.random.randint(0, 100),
-            'created_utc': int(date.timestamp()),
-            'subreddit': 'wallstreetbets',
-            'ticker': ticker
-        })
-    
-    return posts
-
 
 def generate_stocktwits_data(ticker: str, count: int = 15) -> list:
     """Generate synthetic StockTwits data."""
@@ -145,7 +121,7 @@ def generate_sentiment_data(ticker: str, count: int = 30) -> pd.DataFrame:
         'date': dates,
         'ticker': ticker,
         'text': [f'Sample text about {ticker}'] * count,
-        'source': np.random.choice(['news', 'reddit', 'stocktwits'], count),
+        'source': np.random.choice(['news_rss', 'finnhub', 'stocktwits'], count),
         'vader_compound': np.random.uniform(-1, 1, count),
         'vader_pos': np.random.uniform(0, 1, count),
         'vader_neu': np.random.uniform(0, 1, count),
@@ -210,13 +186,6 @@ def main():
             json.dump(news_data, f, indent=2)
         total_size += news_path.stat().st_size
         
-        print(f"  • Reddit data...")
-        reddit_data = generate_reddit_data(ticker, count=15)
-        reddit_path = RAW_DIR / f"reddit_{ticker}.json"
-        with open(reddit_path, 'w') as f:
-            json.dump(reddit_data, f, indent=2)
-        total_size += reddit_path.stat().st_size
-        
         print(f"  • StockTwits data...")
         stocktwits_data = generate_stocktwits_data(ticker, count=15)
         stocktwits_path = RAW_DIR / f"stocktwits_{ticker}.json"
@@ -245,10 +214,6 @@ def main():
         'files': {
             'raw': [
                 f'yahoo_{t}.parquet' for t in tickers
-            ] + [
-                f'news_{t}.json' for t in tickers
-            ] + [
-                f'reddit_{t}.json' for t in tickers
             ] + [
                 f'stocktwits_{t}.json' for t in tickers
             ],
