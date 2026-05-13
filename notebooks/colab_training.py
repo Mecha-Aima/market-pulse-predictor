@@ -34,26 +34,35 @@ drive.mount('/content/drive')
 
 # %%
 # Clone your repository
-!git clone https://github.com/YOUR_USERNAME/market-pulse-predictor.git
+!git clone https://github.com/Mecha-Aima/market-pulse-predictor.git
 %cd market-pulse-predictor
 
 # %%
 # Set environment variables for Railway MLflow
 import os
+from google.colab import userdata
 
-# ⚠️ REPLACE WITH YOUR RAILWAY MLFLOW URL
-# Get this from: railway domain (or Railway dashboard)
-os.environ['MLFLOW_TRACKING_URI'] = 'https://your-app.up.railway.app'
+# ── MLflow (Railway) ────────────────────────────────────────────────────────
+# Your Railway deployment is live at:
+os.environ['MLFLOW_TRACKING_URI'] = 'https://market-pulse-predictor-production.up.railway.app'
 os.environ['MLFLOW_EXPERIMENT_NAME'] = 'market_pulse'
 
-# AWS credentials for S3 artifact storage
-# These should match your Railway environment variables
-os.environ['AWS_ACCESS_KEY_ID'] = ''
-os.environ['AWS_SECRET_ACCESS_KEY'] = ''
+# ── AWS credentials (S3 artifact storage) ───────────────────────────────────
+# ⚠️  DO NOT paste credentials here — use Colab Secrets instead:
+#   1. Click the 🔑 key icon in the left sidebar (or Secrets in Runtime menu)
+#   2. Add: AWS_ACCESS_KEY_ID   → your key ID
+#   3. Add: AWS_SECRET_ACCESS_KEY → your secret key
+#   4. Toggle "Notebook access" ON for each secret
+#
+# These are then read securely at runtime below:
+os.environ['AWS_ACCESS_KEY_ID'] = userdata.get('AWS_ACCESS_KEY_ID')
+os.environ['AWS_SECRET_ACCESS_KEY'] = userdata.get('AWS_SECRET_ACCESS_KEY')
 os.environ['AWS_DEFAULT_REGION'] = 'us-east-1'
+os.environ['MLFLOW_S3_ENDPOINT_URL'] = ''  # Leave empty for standard AWS S3
 
 print(f"✅ MLflow Tracking URI: {os.environ['MLFLOW_TRACKING_URI']}")
 print(f"✅ Experiment: {os.environ['MLFLOW_EXPERIMENT_NAME']}")
+print(f"✅ AWS Key ID (first 8 chars): {os.environ['AWS_ACCESS_KEY_ID'][:8]}...")
 
 # %%
 # Copy feature data from Google Drive
