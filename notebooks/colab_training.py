@@ -25,7 +25,10 @@
 
 # %%
 # Install dependencies
-!pip install -q torch mlflow pyyaml scikit-learn numpy pandas boto3 psycopg2-binary
+# Pin mlflow to the exact version deployed on Railway (railway/Dockerfile.mlflow: mlflow==2.21.3).
+# MLflow 3.x log_model always calls /api/2.0/mlflow/logged-models — a 3.x-only endpoint
+# that returns 404 on the 2.x server.
+!pip install -q torch "mlflow==2.21.3" pyyaml scikit-learn numpy pandas boto3 psycopg2-binary
 
 # %%
 # Mount Google Drive
@@ -163,10 +166,11 @@ params['training']['device'] = 'cuda'
 params['training']['epochs'] = 50
 params['training']['batch_size'] = 64
 params['training']['learning_rate'] = 0.001
-params['training']['hidden_size'] = 128
+params['training']['hidden_size'] = 64
 params['training']['num_layers'] = 2
-params['training']['dropout'] = 0.2
-params['training']['early_stopping_patience'] = 7
+params['training']['dropout'] = 0.4
+params['training']['early_stopping_patience'] = 10
+params['training']['weight_decay'] = 0.0001
 
 with open('params.yaml', 'w') as f:
     yaml.dump(params, f)

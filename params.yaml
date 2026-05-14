@@ -14,10 +14,11 @@ training:
   epochs: 50
   batch_size: 64
   learning_rate: 0.001
-  hidden_size: 128
+  weight_decay: 0.0001
+  hidden_size: 64
   num_layers: 2
-  dropout: 0.2
-  early_stopping_patience: 7
+  dropout: 0.4
+  early_stopping_patience: 10
   task: "direction"
   model: "lstm"
   device: "auto"

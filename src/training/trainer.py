@@ -21,6 +21,7 @@ class Trainer:
         device: str,
         patience: int,
         task_name: str,
+        weight_decay: float = 1e-4,
     ) -> None:
         self.model = model.to(device)
         self.train_dataloader = train_dataloader
@@ -29,7 +30,7 @@ class Trainer:
         self.device = device
         self.patience = patience
         self.task_name = task_name
-        self.optimizer = torch.optim.Adam(self.model.parameters(), lr=learning_rate)
+        self.optimizer = torch.optim.Adam(self.model.parameters(), lr=learning_rate, weight_decay=weight_decay)
         self.loss_fn = self._build_loss()
 
     def train(
@@ -67,7 +68,33 @@ class Trainer:
 
         if best_state is not None:
             self.model.load_state_dict(best_state)
-        mlflow.pytorch.log_model(self.model, name="model")
+
+        try:
+            from mlflow.models.signature import infer_signature
+            
+            # Generate input example and signature
+            example_features, _ = next(iter(self.train_dataloader))
+            example_input = example_features[:1].to(self.device)
+            example_output = self.model(example_input)
+            
+            input_example = example_input.cpu().numpy()
+            signature = infer_signature(input_example, example_output.detach().cpu().numpy())
+            
+            # Clean local version from torch requirement to avoid MLflow warning
+            reqs = mlflow.pytorch.get_default_pip_requirements()
+            cleaned_reqs = [r.split("+")[0] if r.startswith("torch") else r for r in reqs]
+            
+            mlflow.pytorch.log_model(
+                self.model, 
+                artifact_path="model",
+                signature=signature,
+                input_example=input_example,
+                pip_requirements=cleaned_reqs
+            )
+        except Exception as e:
+            print(f"Warning: Failed to log model signature: {e}")
+            mlflow.pytorch.log_model(self.model, artifact_path="model")
+
         return dict(history)
 
     def _train_epoch(self) -> float:
@@ -122,12 +149,25 @@ class Trainer:
             )
         return metrics
 
+    def _get_pos_weight(self) -> torch.Tensor | None:
+        if self.task_name != "volatility":
+            return None
+        total = 0
+        pos = 0
+        for _, targets in self.train_dataloader:
+            total += targets.numel()
+            pos += targets.sum().item()
+        if pos == 0:
+            return torch.tensor([1.0], device=self.device)
+        return torch.tensor([(total - pos) / pos], device=self.device)
+
     def _build_loss(self):
         if self.task_name == "direction":
             return nn.CrossEntropyLoss()
         if self.task_name == "return":
             return nn.MSELoss()
-        return nn.BCEWithLogitsLoss()
+        pos_weight = self._get_pos_weight()
+        return nn.BCEWithLogitsLoss(pos_weight=pos_weight)
 
     def _prepare_targets(self, targets: torch.Tensor) -> torch.Tensor:
         targets = targets.to(self.device)

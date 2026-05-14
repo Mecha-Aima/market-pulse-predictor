@@ -5,6 +5,10 @@ from datetime import datetime, timezone
 from pathlib import Path
 from subprocess import run
 
+from dotenv import load_dotenv
+
+load_dotenv()
+
 import mlflow
 import numpy as np
 import torch
@@ -64,6 +68,7 @@ def run_training_pipeline() -> dict:
             device=device,
             patience=training_params["early_stopping_patience"],
             task_name=task_name,
+            weight_decay=training_params.get("weight_decay", 1e-4),
         )
         history = trainer.train(
             epochs=training_params["epochs"],
