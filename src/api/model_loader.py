@@ -7,6 +7,14 @@ import mlflow
 import torch
 from mlflow.tracking import MlflowClient
 
+from src.models.gru_model import GRUModel
+from src.models.lstm_model import LSTMModel
+from src.models.rnn_model import SimpleRNNModel
+
+_ARCH_CLASSES = {"lstm": LSTMModel, "gru": GRUModel, "rnn": SimpleRNNModel}
+
+_TASK_OUTPUT_SIZES = {"direction": 3, "return": 1, "volatility": 1}
+
 logger = logging.getLogger(__name__)
 
 
@@ -85,17 +93,47 @@ class ModelRegistry:
             f"rnn_{task}_best.pt",
         ]
 
-        for pattern in patterns:
-            checkpoint_path = self.model_path / pattern
+        for arch_name in ("lstm", "gru", "rnn"):
+            checkpoint_path = self.model_path / f"{arch_name}_{task}_best.pt"
             if checkpoint_path.exists():
                 try:
-                    model = torch.load(checkpoint_path, map_location="cpu")
-                    logger.info(f"Loaded model from {checkpoint_path}")
+                    state_dict = torch.load(
+                        checkpoint_path, map_location="cpu", weights_only=True
+                    )
+                    model = self._reconstruct_from_state_dict(
+                        state_dict, arch_name, task
+                    )
+                    logger.info(f"Loaded {arch_name} model for task={task} from {checkpoint_path}")
                     return model
                 except Exception as e:
                     logger.warning(f"Failed to load {checkpoint_path}: {e}")
 
         return None
+
+    @staticmethod
+    def _reconstruct_from_state_dict(
+        state_dict: dict, arch_name: str, task: str
+    ) -> torch.nn.Module:
+        """Reconstruct a model instance from a saved state dict."""
+        # Infer architecture dimensions from the state dict itself.
+        hh_keys = sorted(k for k in state_dict if "weight_hh_l" in k)
+        hidden_size = state_dict[hh_keys[0]].shape[1]
+        num_layers = len(hh_keys)
+        ih_key = next(k for k in state_dict if "weight_ih_l0" in k)
+        input_size = state_dict[ih_key].shape[1]
+        output_size = _TASK_OUTPUT_SIZES[task]
+
+        ModelClass = _ARCH_CLASSES[arch_name]
+        model = ModelClass(
+            input_size=input_size,
+            hidden_size=hidden_size,
+            num_layers=num_layers,
+            output_size=output_size,
+            dropout=0.0,
+        )
+        model.load_state_dict(state_dict)
+        model.eval()
+        return model
 
     def get_latest_features(self, ticker: str) -> Optional[dict]:
         """Read most recent features for a ticker"""

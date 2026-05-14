@@ -2,7 +2,6 @@ import sys
 from datetime import datetime, timedelta
 from pathlib import Path
 
-import yaml
 from airflow.operators.python import PythonOperator
 
 from airflow import DAG
@@ -29,30 +28,25 @@ dag = DAG(
 )
 
 
-def train_model(model_type: str):
-    with open("params.yaml") as f:
-        params = yaml.safe_load(f)
-    params["training"]["model"] = model_type
-    with open("params.yaml", "w") as f:
-        yaml.dump(params, f)
-    from src.training.run_training import main
+def train_model(model_type: str) -> None:
+    from src.training.run_training import run_training_pipeline
 
-    main()
+    run_training_pipeline(model_type_override=model_type)
 
 
-def train_rnn():
+def train_rnn() -> None:
     train_model("rnn")
 
 
-def train_lstm():
+def train_lstm() -> None:
     train_model("lstm")
 
 
-def train_gru():
+def train_gru() -> None:
     train_model("gru")
 
 
-def evaluate_and_register():
+def evaluate_and_register() -> None:
     pass
 
 

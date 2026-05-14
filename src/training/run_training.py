@@ -28,11 +28,15 @@ MODEL_FACTORIES = {
 }
 
 
-def run_training_pipeline() -> dict:
+def run_training_pipeline(model_type_override: str | None = None) -> dict:
     params = yaml.safe_load((Path.cwd() / "params.yaml").read_text())
     training_params = params["training"]
     task_name = training_params["task"]
-    model_name = training_params["model"]
+    model_name = (
+        model_type_override
+        or os.getenv("TRAINING_MODEL_TYPE")
+        or training_params["model"]
+    )
     device = resolve_device(training_params["device"])
     arrays = load_feature_arrays(Path.cwd() / "data" / "features", task_name)
     input_size = arrays["X_train"].shape[-1]
