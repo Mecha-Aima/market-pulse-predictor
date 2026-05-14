@@ -89,9 +89,7 @@ class TestFeatureBuilderIntegration:
         for _, row in sentiment_df.iterrows():
             date_str = str(row.get("date", ""))
             score = float(row.get("vader_compound", 0.0))
-            label = (
-                "POSITIVE" if score >= 0.05 else ("NEGATIVE" if score <= -0.05 else "NEUTRAL")
-            )
+            label = "POSITIVE" if score >= 0.05 else ("NEGATIVE" if score <= -0.05 else "NEUTRAL")
             rows.append(
                 {
                     "source": row.get("source", "news_rss"),

@@ -21,7 +21,7 @@ _HEADERS = {
 # Finviz news table rows: each <tr> has a date cell and a news link cell.
 # The date cell is either "MMM-DD-YY HH:MMAM" or just "HH:MMAM" (same day).
 _ROW_RE = re.compile(
-    r'<tr[^>]*>.*?'
+    r"<tr[^>]*>.*?"
     r'<td[^>]*align="right"[^>]*>(.*?)</td>.*?'  # date/time cell
     r'<a[^>]*href="(https?://[^"]+)"[^>]*>(.*?)</a>',  # url + title
     re.DOTALL,
@@ -47,9 +47,7 @@ class StockTwitsScraper(BaseScraper):
             html = response.text
 
             # Extract just the news-table section to avoid false matches
-            table_match = re.search(
-                r'id=["\']news-table["\'].*?</table>', html, re.DOTALL
-            )
+            table_match = re.search(r'id=["\']news-table["\'].*?</table>', html, re.DOTALL)
             search_html = table_match.group(0) if table_match else html
 
             records = []
@@ -88,6 +86,4 @@ class StockTwitsScraper(BaseScraper):
             return records
 
         except httpx.HTTPStatusError as e:
-            raise RuntimeError(
-                f"Finviz returned HTTP {e.response.status_code} for {ticker}"
-            ) from e
+            raise RuntimeError(f"Finviz returned HTTP {e.response.status_code} for {ticker}") from e

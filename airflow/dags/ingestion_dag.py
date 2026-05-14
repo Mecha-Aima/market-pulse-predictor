@@ -105,7 +105,7 @@ ingest_finnhub_task = PythonOperator(
 dvc_add_raw_task = BashOperator(
     task_id="dvc_add_raw",
     bash_command=(
-        'cd /app && dvc add data/raw/ && git add data/raw.dvc '
+        "cd /app && dvc add data/raw/ && git add data/raw.dvc "
         '&& git commit -m "chore: update raw data [skip ci]" || true'
     ),
     dag=dag,

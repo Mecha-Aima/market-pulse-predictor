@@ -59,15 +59,15 @@ class YahooFinanceScraper(BaseScraper):
 
         Always uses daily ('1d') bars to match the daily feature pipeline.
         """
-        if lookback_hours <= 720:    # <= 30 days
+        if lookback_hours <= 720:  # <= 30 days
             return "1mo", "1d"
-        if lookback_hours <= 2160:   # <= 90 days
+        if lookback_hours <= 2160:  # <= 90 days
             return "3mo", "1d"
-        if lookback_hours <= 8760:   # <= 1 year
+        if lookback_hours <= 8760:  # <= 1 year
             return "1y", "1d"
         if lookback_hours <= 17520:  # <= 2 years
             return "2y", "1d"
-        return "5y", "1d"           # max free via yfinance
+        return "5y", "1d"  # max free via yfinance
 
     def _build_session(self):
         cache_dir = self._raw_dir(self.source_name)

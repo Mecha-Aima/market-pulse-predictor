@@ -26,4 +26,3 @@ class GRUModel(BaseSequentialModel):
     def forward(self, x: Tensor) -> Tensor:
         _, hidden = self.gru(x)
         return self.head(hidden[-1])
-

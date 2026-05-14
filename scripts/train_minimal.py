@@ -56,9 +56,9 @@ def main():
 
     for model in models:
         for task in tasks:
-            print(f"\n{'='*60}")
+            print(f"\n{'=' * 60}")
             print(f"Training {model.upper()} for {task} task (minimal)")
-            print(f"{'='*60}\n")
+            print(f"{'=' * 60}\n")
 
             params["training"]["model"] = model
             params["training"]["task"] = task

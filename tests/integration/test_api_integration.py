@@ -62,9 +62,7 @@ class TestAPIPredictionIntegration:
         if not cols:
             pytest.skip("No numeric features available")
 
-        X = torch.tensor(
-            features_df[cols].head(5).values, dtype=torch.float32
-        ).unsqueeze(1)
+        X = torch.tensor(features_df[cols].head(5).values, dtype=torch.float32).unsqueeze(1)
 
         model = SimpleRNNModel(len(cols), 16, 1, 2, 0.0)
         model.eval()
@@ -84,9 +82,7 @@ class TestAPIPredictionIntegration:
         if not cols:
             pytest.skip("No numeric features available")
 
-        X = torch.tensor(
-            features_df[cols].head(5).values, dtype=torch.float32
-        ).unsqueeze(1)
+        X = torch.tensor(features_df[cols].head(5).values, dtype=torch.float32).unsqueeze(1)
         model = SimpleRNNModel(len(cols), 16, 1, 2, 0.0)
         model.eval()
         with torch.no_grad():

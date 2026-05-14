@@ -11,6 +11,7 @@ Or call from your pipeline:
     from src.ingestion.technicals import TechnicalsEnricher
     TechnicalsEnricher().run()
 """
+
 from __future__ import annotations
 
 import json
@@ -71,7 +72,8 @@ class TechnicalsEnricher:
                 data = json.loads(f.read_text())
                 rows = data if isinstance(data, list) else [data]
                 price_rows.extend(
-                    r for r in rows
+                    r
+                    for r in rows
                     if r.get("source") == "yahoo_price" and r.get("close") is not None
                 )
             except Exception as e:
@@ -169,6 +171,7 @@ class TechnicalsEnricher:
 
 if __name__ == "__main__":
     import sys
+
     logging.basicConfig(level=logging.INFO, stream=sys.stdout)
     enricher = TechnicalsEnricher()
     counts = enricher.run()

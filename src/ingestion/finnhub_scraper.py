@@ -21,8 +21,10 @@ class FinnhubNewsScraper(BaseScraper):
     def fetch(self, ticker: str, lookback_hours: int) -> list[dict]:
         api_key = os.getenv("FINNHUB_API_KEY")
         if not api_key:
-            print("  ⏭  FinnhubNewsScraper: skipping — FINNHUB_API_KEY not set "
-                  "(get a free key at finnhub.io)")
+            print(
+                "  ⏭  FinnhubNewsScraper: skipping — FINNHUB_API_KEY not set "
+                "(get a free key at finnhub.io)"
+            )
             return []
 
         cutoff = datetime.now(timezone.utc) - timedelta(hours=lookback_hours)

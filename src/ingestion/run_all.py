@@ -92,13 +92,13 @@ def run_all_sources(lookback_hours: int) -> dict[str, int]:
         print(f"  ✗ TechnicalsEnricher failed: {e}")
 
     # Summary
-    print(f"\n{'='*60}")
+    print(f"\n{'=' * 60}")
     print(f"✓ {len(results)} source(s) produced data:")
     for source, count in record_counts.items():
         print(f"  • {source}: {count} records across {results[source]} ticker(s)")
     if errors:
         print(f"⚠️  {len(errors)} error(s) (pipeline continued despite errors)")
-    print("="*60)
+    print("=" * 60)
 
     return dict(results)
 

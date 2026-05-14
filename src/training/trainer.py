@@ -73,25 +73,25 @@ class Trainer:
 
         try:
             from mlflow.models.signature import infer_signature
-            
+
             # Generate input example and signature
             example_features, _ = next(iter(self.train_dataloader))
             example_input = example_features[:1].to(self.device)
             example_output = self.model(example_input)
-            
+
             input_example = example_input.cpu().numpy()
             signature = infer_signature(input_example, example_output.detach().cpu().numpy())
-            
+
             # Clean local version from torch requirement to avoid MLflow warning
             reqs = mlflow.pytorch.get_default_pip_requirements()
             cleaned_reqs = [r.split("+")[0] if r.startswith("torch") else r for r in reqs]
-            
+
             mlflow.pytorch.log_model(
-                self.model, 
+                self.model,
                 artifact_path="model",
                 signature=signature,
                 input_example=input_example,
-                pip_requirements=cleaned_reqs
+                pip_requirements=cleaned_reqs,
             )
         except Exception as e:
             print(f"Warning: Failed to log model signature: {e}")

@@ -122,4 +122,3 @@ class NewsRSSScraper(BaseScraper):
             if re.search(rf"\b{re.escape(ticker)}\b", text, flags=re.IGNORECASE)
         ]
         return matched or ["MARKET"]
-

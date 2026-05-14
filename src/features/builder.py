@@ -18,9 +18,9 @@ class TimeSeriesBuilder:
 
     def aggregate_sentiment(self, processed_frame: pd.DataFrame) -> pd.DataFrame:
         frame = processed_frame.copy()
-        frame["date_bucket"] = (
-            pd.to_datetime(frame["timestamp"], format="ISO8601", utc=True).dt.date
-        )
+        frame["date_bucket"] = pd.to_datetime(
+            frame["timestamp"], format="ISO8601", utc=True
+        ).dt.date
         frame = frame[frame["text"].notna() & frame["sentiment_label"].notna()].copy()
         if frame.empty:
             return pd.DataFrame(
@@ -77,10 +77,22 @@ class TimeSeriesBuilder:
         tech_rows = frame[frame["source"] == "technicals"].copy()
         if not tech_rows.empty:
             tech_cols = ["ticker", "date_bucket"] + [
-                c for c in tech_rows.columns
-                if c in {"rsi", "macd", "macd_signal", "macd_hist",
-                         "bb_upper", "bb_mid", "bb_lower", "bb_width", "bb_pct",
-                         "atr", "obv"}
+                c
+                for c in tech_rows.columns
+                if c
+                in {
+                    "rsi",
+                    "macd",
+                    "macd_signal",
+                    "macd_hist",
+                    "bb_upper",
+                    "bb_mid",
+                    "bb_lower",
+                    "bb_width",
+                    "bb_pct",
+                    "atr",
+                    "obv",
+                }
             ]
             tech_frame = (
                 tech_rows[tech_cols]
@@ -97,9 +109,14 @@ class TimeSeriesBuilder:
         # Left-join: keep all price days; fill missing sentiment with 0
         merged = price_frame.merge(sentiment_features, on=["ticker", "date_bucket"], how="left")
         sentiment_cols = [
-            "sentiment_positive_count", "sentiment_negative_count", "sentiment_neutral_count",
-            "sentiment_score_mean", "sentiment_score_std", "total_mentions",
-            "stocktwits_mentions", "news_mentions",
+            "sentiment_positive_count",
+            "sentiment_negative_count",
+            "sentiment_neutral_count",
+            "sentiment_score_mean",
+            "sentiment_score_std",
+            "total_mentions",
+            "stocktwits_mentions",
+            "news_mentions",
         ]
         for col in sentiment_cols:
             if col in merged.columns:
@@ -118,7 +135,7 @@ class TimeSeriesBuilder:
                 "ticker",
                 "date_bucket",
                 "hour_bucket",
-                "index",           # guard against any reset_index() leaks
+                "index",  # guard against any reset_index() leaks
                 "label_direction",
                 "label_return",
                 "label_volatility_spike",

@@ -27,18 +27,14 @@ async def lifespan(app: FastAPI):
         model = registry.get_model(task)
         if model:
             logger.info(f"Loaded model for task: {task}")
-    
+
     yield
-    
+
     # Shutdown
     logger.info("Shutting down API server...")
 
 
-app = FastAPI(
-    title="Market Pulse Predictor API",
-    version="1.0.0",
-    lifespan=lifespan
-)
+app = FastAPI(title="Market Pulse Predictor API", version="1.0.0", lifespan=lifespan)
 
 # CORS middleware
 app.add_middleware(
@@ -61,11 +57,9 @@ async def health():
         if files:
             latest_file = max(files, key=lambda p: p.stat().st_mtime)
             last_ingestion = datetime.fromtimestamp(latest_file.stat().st_mtime).isoformat()
-    
+
     return HealthResponse(
-        status="ok",
-        model_loaded=registry.models_loaded(),
-        last_data_ingestion=last_ingestion
+        status="ok", model_loaded=registry.models_loaded(), last_data_ingestion=last_ingestion
     )
 
 
@@ -84,20 +78,19 @@ async def predict(request: PredictionRequest):
     if request.ticker not in tickers:
         raise HTTPException(
             status_code=404,
-            detail=f"Ticker {request.ticker} not tracked. Available tickers: {', '.join(tickers)}"
+            detail=f"Ticker {request.ticker} not tracked. Available tickers: {', '.join(tickers)}",
         )
-    
+
     # Check if models are loaded
     direction_model = registry.get_model("direction")
     return_model = registry.get_model("return")
     volatility_model = registry.get_model("volatility")
-    
+
     if not all([direction_model, return_model, volatility_model]):
         raise HTTPException(
-            status_code=503,
-            detail="Models not loaded. Please wait for model initialization."
+            status_code=503, detail="Models not loaded. Please wait for model initialization."
         )
-    
+
     # For now, return mock predictions
     # TODO: Implement actual prediction logic with feature loading
     return PredictionResponse(
@@ -108,7 +101,7 @@ async def predict(request: PredictionRequest):
         volatility_spike=False,
         volatility_confidence=0.85,
         model_name="lstm",
-        timestamp=datetime.utcnow().isoformat() + "Z"
+        timestamp=datetime.utcnow().isoformat() + "Z",
     )
 
 
@@ -132,7 +125,7 @@ async def get_sentiment(ticker: str):
     tickers = await get_tickers()
     if ticker not in tickers:
         raise HTTPException(status_code=404, detail=f"Ticker {ticker} not found")
-    
+
     # TODO: Implement sentiment data fetching
     return {"ticker": ticker, "data": []}
 
@@ -143,6 +136,6 @@ async def get_prices(ticker: str):
     tickers = await get_tickers()
     if ticker not in tickers:
         raise HTTPException(status_code=404, detail=f"Ticker {ticker} not found")
-    
+
     # TODO: Implement price data fetching
     return {"ticker": ticker, "data": []}

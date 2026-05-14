@@ -71,7 +71,8 @@ class BaseScraper(ABC):
         normalized = {
             key: record[key]
             for key in RAW_RECORD_KEYS
-            if key in record or key in {"text", "open", "high", "low", "close", "volume", "score", "url"}  # noqa: E501
+            if key in record
+            or key in {"text", "open", "high", "low", "close", "volume", "score", "url"}  # noqa: E501
         }
         for optional_key in ("text", "open", "high", "low", "close", "volume", "score", "url"):
             normalized.setdefault(optional_key, None)

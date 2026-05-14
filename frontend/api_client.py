@@ -65,9 +65,7 @@ class APIClient:
     @st.cache_data(ttl=60)
     def get_sentiment(_self, ticker: str):
         try:
-            response = httpx.get(
-                f"{_self.base_url}/sentiment/{ticker}", timeout=_self.timeout
-            )
+            response = httpx.get(f"{_self.base_url}/sentiment/{ticker}", timeout=_self.timeout)
             response.raise_for_status()
             return response.json()
         except Exception as e:
@@ -77,9 +75,7 @@ class APIClient:
     @st.cache_data(ttl=60)
     def get_prices(_self, ticker: str):
         try:
-            response = httpx.get(
-                f"{_self.base_url}/prices/{ticker}", timeout=_self.timeout
-            )
+            response = httpx.get(f"{_self.base_url}/prices/{ticker}", timeout=_self.timeout)
             response.raise_for_status()
             return response.json()
         except Exception as e:

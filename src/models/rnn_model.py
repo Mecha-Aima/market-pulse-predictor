@@ -26,4 +26,3 @@ class SimpleRNNModel(BaseSequentialModel):
     def forward(self, x: Tensor) -> Tensor:
         _, hidden = self.rnn(x)
         return self.head(hidden[-1])
-

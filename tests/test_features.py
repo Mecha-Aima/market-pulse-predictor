@@ -181,6 +181,7 @@ def test_sequence_shape() -> None:
 
 def synthetic_feature_frame(rows: int) -> pd.DataFrame:
     from datetime import date
+
     start = date(2024, 1, 2)  # first trading day
     data = []
     for index in range(rows):

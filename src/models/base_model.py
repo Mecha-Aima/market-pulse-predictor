@@ -28,4 +28,3 @@ class BaseSequentialModel(nn.Module, ABC):
 
     def count_parameters(self) -> int:
         return sum(parameter.numel() for parameter in self.parameters() if parameter.requires_grad)
-

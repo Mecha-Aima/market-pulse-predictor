@@ -27,9 +27,17 @@ class AlphaVantageNewsScraper(BaseScraper):
     per_ticker = True
 
     _FUNDAMENTAL_FIELDS = [
-        "MarketCapitalization", "PERatio", "EPS", "DividendYield",
-        "52WeekHigh", "52WeekLow", "50DayMovingAverage", "200DayMovingAverage",
-        "Beta", "ProfitMargin", "RevenuePerShareTTM",
+        "MarketCapitalization",
+        "PERatio",
+        "EPS",
+        "DividendYield",
+        "52WeekHigh",
+        "52WeekLow",
+        "50DayMovingAverage",
+        "200DayMovingAverage",
+        "Beta",
+        "ProfitMargin",
+        "RevenuePerShareTTM",
     ]
 
     def fetch(self, ticker: str, lookback_hours: int) -> list[dict]:

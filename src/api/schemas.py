@@ -6,7 +6,7 @@ from pydantic import BaseModel, Field, field_validator
 class PredictionRequest(BaseModel):
     ticker: str = Field(..., min_length=1, max_length=5, description="Stock ticker symbol")
     feature_override: Optional[list[float]] = Field(None, description="Pre-built feature vector")
-    
+
     @field_validator("ticker")
     @classmethod
     def ticker_uppercase(cls, v: str) -> str:
@@ -22,7 +22,7 @@ class PredictionResponse(BaseModel):
     volatility_confidence: float = Field(..., ge=0.0, le=1.0)
     model_name: str
     timestamp: str
-    
+
     model_config = {
         "json_schema_extra": {
             "example": {
@@ -33,7 +33,7 @@ class PredictionResponse(BaseModel):
                 "volatility_spike": False,
                 "volatility_confidence": 0.85,
                 "model_name": "lstm",
-                "timestamp": "2024-01-15T14:30:00Z"
+                "timestamp": "2024-01-15T14:30:00Z",
             }
         }
     }
@@ -41,7 +41,7 @@ class PredictionResponse(BaseModel):
 
 class ModelComparisonResponse(BaseModel):
     models: list[dict]
-    
+
     model_config = {
         "json_schema_extra": {
             "example": {
@@ -52,7 +52,7 @@ class ModelComparisonResponse(BaseModel):
                         "accuracy": 0.72,
                         "f1": 0.68,
                         "rmse": None,
-                        "run_id": "abc123"
+                        "run_id": "abc123",
                     }
                 ]
             }

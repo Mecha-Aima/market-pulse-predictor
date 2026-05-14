@@ -26,4 +26,3 @@ class LSTMModel(BaseSequentialModel):
     def forward(self, x: Tensor) -> Tensor:
         _, (hidden, _) = self.lstm(x)
         return self.head(hidden[-1])
-

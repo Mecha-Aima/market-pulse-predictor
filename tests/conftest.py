@@ -14,7 +14,7 @@ from tests.fixtures import (
 )
 
 # Configure pytest-asyncio
-pytest_plugins = ('pytest_asyncio',)
+pytest_plugins = ("pytest_asyncio",)
 
 REQUIRED_ENV_KEYS = {
     "FINNHUB_API_KEY",
@@ -44,7 +44,7 @@ def project_root() -> Path:
 @pytest.fixture()
 def test_ticker() -> str:
     """Provide a default test ticker."""
-    return 'AAPL'
+    return "AAPL"
 
 
 @pytest.fixture()
@@ -63,7 +63,6 @@ def fixture_price_data(test_ticker: str):
 def fixture_news_data(test_ticker: str):
     """Load news data fixture."""
     return load_news_data(test_ticker)
-
 
 
 @pytest.fixture()
@@ -88,4 +87,3 @@ def fixture_features_data(test_ticker: str):
 def all_fixtures(test_ticker: str) -> Dict[str, Any]:
     """Load all fixtures for a ticker."""
     return load_all_fixtures(test_ticker)
-

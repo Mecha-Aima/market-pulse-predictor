@@ -27,9 +27,7 @@ def _make_tensors(features_df, feature_cols, n_classes=2):
     available = [c for c in feature_cols if c in features_df.columns]
     if not available:
         return None, None, available
-    X = torch.tensor(
-        features_df[available].values, dtype=torch.float32
-    ).unsqueeze(1)
+    X = torch.tensor(features_df[available].values, dtype=torch.float32).unsqueeze(1)
     labels = (
         features_df["label"].values
         if "label" in features_df.columns

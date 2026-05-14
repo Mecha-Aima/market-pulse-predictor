@@ -162,6 +162,7 @@ def test_news_rss_deduplication(tmp_path, monkeypatch) -> None:
     # scraper calls httpx.get(url) first, then passes response.content to feedparser
     class FakeHttpxResponse:
         content = b"<rss/>"
+
         def raise_for_status(self) -> None:
             return None
 
@@ -176,7 +177,6 @@ def test_news_rss_deduplication(tmp_path, monkeypatch) -> None:
     seen_path = tmp_path / "data" / "raw" / "news_rss" / "seen_ids.json"
     assert seen_path.exists()
     assert json.loads(seen_path.read_text()) == ["reuters-1"]
-
 
 
 def test_stocktwits_returns_records_for_valid_ticker(tmp_path, monkeypatch) -> None:
@@ -196,6 +196,7 @@ def test_stocktwits_returns_records_for_valid_ticker(tmp_path, monkeypatch) -> N
 
     class FakeResponse:
         text = finviz_html
+
         def raise_for_status(self) -> None:
             return None
 
@@ -208,7 +209,6 @@ def test_stocktwits_returns_records_for_valid_ticker(tmp_path, monkeypatch) -> N
     assert records[0]["source"] == "stocktwits"
     assert records[0]["text"] == "AAPL surges on earnings"
     assert records[0]["ticker"] == "AAPL"
-
 
 
 def test_alphavantage_returns_news_with_sentiment(monkeypatch, tmp_path) -> None:

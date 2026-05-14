@@ -41,25 +41,17 @@ class TestYahooFinanceIntegration:
         for rec in records[:5]:
             assert required_keys.issubset(rec.keys()), f"Missing keys: {required_keys - rec.keys()}"
 
-    def test_save_creates_json_file(self, tmp_path):
+    def test_save_creates_json_file(self, tmp_path, monkeypatch):
         scraper = YahooFinanceScraper()
         records = scraper.fetch("AAPL", lookback_hours=48)
 
         if not records:
             pytest.skip("No records fetched")
 
-
-        # Redirect raw dir for this test
-        import src.ingestion.base_scraper as bs
-
-        original = bs.RAW_DIR
-        bs.RAW_DIR = tmp_path
-        try:
-            scraper.save(records, source="yahoo_price", ticker="AAPL")
-            files = list((tmp_path / "yahoo_price").glob("AAPL_*.json"))
-            assert len(files) > 0
-        finally:
-            bs.RAW_DIR = original
+        monkeypatch.chdir(tmp_path)
+        scraper.save(records, source="yahoo_price", ticker="AAPL")
+        files = list((tmp_path / "data" / "raw" / "yahoo_price").glob("AAPL_*.json"))
+        assert len(files) > 0
 
 
 @pytest.mark.integration
@@ -80,23 +72,16 @@ class TestNewsRSSIntegration:
         for rec in records[:5]:
             assert required_keys.issubset(rec.keys())
 
-    def test_deduplication(self, tmp_path):
+    def test_deduplication(self, tmp_path, monkeypatch):
         """Running fetch twice should not return duplicate IDs."""
-        import src.ingestion.base_scraper as bs
+        monkeypatch.chdir(tmp_path)
+        scraper = NewsRSSScraper()
+        first = scraper.fetch("AAPL", lookback_hours=48)
+        second = scraper.fetch("AAPL", lookback_hours=48)
 
-        original = bs.RAW_DIR
-        bs.RAW_DIR = tmp_path
-        try:
-            scraper = NewsRSSScraper()
-            first = scraper.fetch("AAPL", lookback_hours=48)
-            second = scraper.fetch("AAPL", lookback_hours=48)
-
-            # All IDs from second run should already be seen
-            first_ids = {r["id"] for r in first}
-            second_ids = {r["id"] for r in second}
-            assert len(second_ids - first_ids) == 0, "Second run returned new IDs — dedup failed"
-        finally:
-            bs.RAW_DIR = original
+        first_ids = {r["id"] for r in first}
+        second_ids = {r["id"] for r in second}
+        assert len(second_ids - first_ids) == 0, "Second run returned new IDs — dedup failed"
 
 
 @pytest.mark.integration
