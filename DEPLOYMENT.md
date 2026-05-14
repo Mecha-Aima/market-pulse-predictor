@@ -207,19 +207,19 @@ Push any commit to `main`. The CD workflow will:
 
 ```bash
 # API health
-curl http://<PUBLIC_IP>/api/v1/health
+curl http://35.153.53.183/api/v1/health
 # Expected: {"status":"ok","model_loaded":true,...}
 
 # Prediction
-curl -X POST http://<PUBLIC_IP>/api/v1/predict \
+curl -X POST http://35.153.53.183/api/v1/predict \
   -H "Content-Type: application/json" \
   -d '{"ticker": "AAPL"}'
 
 # Streamlit dashboard
-open http://<PUBLIC_IP>
+open http://35.153.53.183
 
 # Airflow UI (your IP must be in the security group)
-open http://<PUBLIC_IP>:8080
+open http://35.153.53.183:8080
 # Default credentials: admin / admin
 ```
 
@@ -228,8 +228,8 @@ open http://<PUBLIC_IP>:8080
 ## Updating the .env on EC2
 
 ```bash
-scp -i ~/.ssh/market-pulse-key.pem .env ubuntu@<PUBLIC_IP>:/app/market-pulse-predictor/.env
-ssh -i ~/.ssh/market-pulse-key.pem ubuntu@<PUBLIC_IP> \
+scp -i ~/.ssh/market-pulse-key.pem .env ubuntu@35.153.53.183:/app/market-pulse-predictor/.env
+ssh -i ~/.ssh/market-pulse-key.pem ubuntu@35.153.53.183 \
   "cd /app/market-pulse-predictor && docker compose -f docker-compose.prod.yml up -d"
 ```
 

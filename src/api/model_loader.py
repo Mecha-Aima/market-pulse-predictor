@@ -86,13 +86,6 @@ class ModelRegistry:
 
     def _load_from_checkpoint(self, task: str) -> Optional[torch.nn.Module]:
         """Load model from local .pt checkpoint"""
-        # Look for any model checkpoint for this task
-        patterns = [
-            f"lstm_{task}_best.pt",
-            f"gru_{task}_best.pt",
-            f"rnn_{task}_best.pt",
-        ]
-
         for arch_name in ("lstm", "gru", "rnn"):
             checkpoint_path = self.model_path / f"{arch_name}_{task}_best.pt"
             if checkpoint_path.exists():

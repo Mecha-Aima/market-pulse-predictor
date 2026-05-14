@@ -171,7 +171,8 @@ def test_dvc_remote_configured_as_s3() -> None:
     assert remote_match, "Could not parse remote name from .dvc/config"
     remote_name = remote_match.group(1)
 
-    url_match = re.search(rf'\[\'remote "{re.escape(remote_name)}"\'\].*?url\s*=\s*(\S+)', content, re.DOTALL)
+    pattern = rf'\[\'remote "{re.escape(remote_name)}"\'\].*?url\s*=\s*(\S+)'
+    url_match = re.search(pattern, content, re.DOTALL)
     assert url_match, f"Could not find url for remote '{remote_name}' in .dvc/config"
     url = url_match.group(1)
 
