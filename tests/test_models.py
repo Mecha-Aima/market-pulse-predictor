@@ -1,19 +1,8 @@
-import pytest
 import torch
 
-try:
-    from src.models.gru_model import GRUModel
-    from src.models.lstm_model import LSTMModel
-    from src.models.rnn_model import SimpleRNNModel
-
-    MODELS_AVAILABLE = True
-except ImportError:
-    MODELS_AVAILABLE = False
-
-# Skip all tests in this module until Phase 4 is wired in CI
-pytestmark = pytest.mark.skip(
-    reason="Phase 4 model tests - will be enabled when Phase 4 is complete"
-)
+from src.models.gru_model import GRUModel
+from src.models.lstm_model import LSTMModel
+from src.models.rnn_model import SimpleRNNModel
 
 
 def test_rnn_forward_pass_shape() -> None:
