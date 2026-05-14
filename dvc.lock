@@ -1,0 +1,104 @@
+schema: '2.0'
+stages:
+  ingest:
+    cmd: python -m src.ingestion.run_all --lookback-hours 24
+    deps:
+    - path: src/ingestion/
+      hash: md5
+      md5: 75779fd4188c44c6ee041aa543125988.dir
+      size: 168382
+      nfiles: 31
+    params:
+      params.yaml:
+        ingestion.lookback_hours: 24
+        ingestion.target_tickers: AAPL,MSFT,GOOGL,AMZN,TSLA,SPY
+    outs:
+    - path: data/raw/
+      hash: md5
+      md5: 1acb406153e74cb677ca606f41a15d27.dir
+      size: 80936
+      nfiles: 7
+  sentiment:
+    cmd: python -m src.sentiment.run_sentiment
+    deps:
+    - path: data/raw/
+      hash: md5
+      md5: 1acb406153e74cb677ca606f41a15d27.dir
+      size: 80936
+      nfiles: 7
+    - path: src/sentiment/
+      hash: md5
+      md5: b12204577890bb686a66bea94e15bb71.dir
+      size: 31473
+      nfiles: 9
+    params:
+      params.yaml:
+        sentiment.method: vader
+    outs:
+    - path: data/processed/
+      hash: md5
+      md5: 8a5654e3bdbe2187846209e2105aa04b.dir
+      size: 3766421
+      nfiles: 66
+  features:
+    cmd: python -m src.features.run_features
+    deps:
+    - path: data/processed/
+      hash: md5
+      md5: 8a5654e3bdbe2187846209e2105aa04b.dir
+      size: 3766421
+      nfiles: 66
+    - path: src/features/
+      hash: md5
+      md5: 02f927afed1645e5a9711d8200ff67ab.dir
+      size: 50113
+      nfiles: 8
+    params:
+      params.yaml:
+        features.sequence_length: 10
+        features.train_ratio: 0.7
+        features.val_ratio: 0.15
+    outs:
+    - path: data/features/
+      hash: md5
+      md5: 83e9afab423d9869fcd3f67abb1ea239.dir
+      size: 16915174
+      nfiles: 14
+  train:
+    cmd: python -m src.training.run_training
+    deps:
+    - path: data/features/
+      hash: md5
+      md5: 83e9afab423d9869fcd3f67abb1ea239.dir
+      size: 16915174
+      nfiles: 14
+    - path: src/models/
+      hash: md5
+      md5: ee9ffebd1d5d9824f9012af2344a6912.dir
+      size: 17446
+      nfiles: 15
+    - path: src/training/
+      hash: md5
+      md5: 3371c9043885d70a0f38cae0e45cad9a.dir
+      size: 52203
+      nfiles: 10
+    params:
+      params.yaml:
+        training:
+          epochs: 50
+          batch_size: 64
+          learning_rate: 0.001
+          weight_decay: 0.0001
+          hidden_size: 64
+          num_layers: 2
+          dropout: 0.4
+          early_stopping_patience: 10
+          task: direction
+          model: lstm
+          device: auto
+    outs:
+    - path: models/
+      hash: md5
+      md5: dcb49a26bd0b68546658900744d28495.dir
+      size: 3286887
+      nfiles: 10

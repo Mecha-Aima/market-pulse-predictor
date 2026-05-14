@@ -164,10 +164,10 @@ Go to: **GitHub repo → Settings → Secrets and variables → Actions → New 
 
 ```bash
 # Copy your production .env to the instance
-scp -i ~/.ssh/market-pulse-key.pem .env ubuntu@<PUBLIC_IP>:/app/market-pulse-predictor/.env
+scp -i ~/.ssh/market-pulse-key.pem .env ubuntu@35.153.53.183:/app/market-pulse-predictor/.env
 
 # SSH in
-ssh -i ~/.ssh/market-pulse-key.pem ubuntu@<PUBLIC_IP>
+ssh -i ~/.ssh/market-pulse-key.pem ubuntu@35.153.53.183
 ```
 
 Once on the instance:
