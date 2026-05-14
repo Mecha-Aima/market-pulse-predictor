@@ -1,11 +1,12 @@
-from datetime import datetime, timedelta
 import os
-from pathlib import Path
 import sys
+from datetime import datetime, timedelta
+from pathlib import Path
 
-from airflow import DAG
 from airflow.operators.bash import BashOperator
 from airflow.operators.python import PythonOperator
+
+from airflow import DAG
 
 # Add project root to path
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))

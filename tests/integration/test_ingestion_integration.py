@@ -1,238 +1,161 @@
 """
 Integration tests for data ingestion pipeline.
 
-Tests end-to-end ingestion using real APIs with test tickers.
+These tests call real external APIs and are skipped in CI by default.
+Tag: @pytest.mark.integration
 """
 
-import pytest
-import pandas as pd
-from pathlib import Path
 import json
-from datetime import datetime, timedelta
 
-from src.ingestion.yahoo_finance import YahooFinanceScraper
-from src.ingestion.news_rss import NewsRSSScraper
+import pytest
+
 from src.ingestion.alphavantage_scraper import AlphaVantageNewsScraper
+from src.ingestion.news_rss import NewsRSSScraper
+from src.ingestion.yahoo_finance import YahooFinanceScraper
 
 
 @pytest.mark.integration
 class TestYahooFinanceIntegration:
-    """Integration tests for Yahoo Finance scraper."""
-    
-    def test_fetch_real_price_data(self, tmp_path):
-        """Test: End-to-end ingestion of real price data."""
-        scraper = YahooFinanceScraper(output_dir=str(tmp_path))
-        
-        # Use a stable test ticker
-        ticker = "AAPL"
-        end_date = datetime.now()
-        start_date = end_date - timedelta(days=7)
-        
-        # Fetch real data
-        data = scraper.fetch(
-            ticker=ticker,
-            start_date=start_date.strftime("%Y-%m-%d"),
-            end_date=end_date.strftime("%Y-%m-%d")
-        )
-        
-        # Verify data structure
-        assert isinstance(data, list), "Should return list of records"
-        assert len(data) > 0, "Should fetch at least some data"
-        
-        # Verify record structure
-        record = data[0]
-        required_fields = ['Date', 'Open', 'High', 'Low', 'Close', 'Volume', 'Ticker']
-        for field in required_fields:
-            assert field in record, f"Record should have {field} field"
-        
-        # Verify data types
-        assert isinstance(record['Close'], (int, float)), "Close should be numeric"
-        assert isinstance(record['Volume'], (int, float)), "Volume should be numeric"
-        assert record['Ticker'] == ticker, "Ticker should match"
-    
-    def test_save_price_data(self, tmp_path):
-        """Test: Save fetched price data to parquet."""
-        scraper = YahooFinanceScraper(output_dir=str(tmp_path))
-        
-        ticker = "MSFT"
-        end_date = datetime.now()
-        start_date = end_date - timedelta(days=5)
-        
-        # Fetch and save
-        data = scraper.fetch(
-            ticker=ticker,
-            start_date=start_date.strftime("%Y-%m-%d"),
-            end_date=end_date.strftime("%Y-%m-%d")
-        )
-        scraper.save(data, ticker)
-        
-        # Verify file exists
-        output_file = tmp_path / f"yahoo_{ticker}.parquet"
-        assert output_file.exists(), "Output file should be created"
-        
-        # Verify file content
-        df = pd.read_parquet(output_file)
-        assert len(df) > 0, "File should contain data"
-        assert 'Close' in df.columns, "Should have Close column"
+    """Integration tests for Yahoo Finance scraper using the real API."""
+
+    def test_fetch_returns_price_records(self):
+        scraper = YahooFinanceScraper()
+        records = scraper.fetch("AAPL", lookback_hours=48)
+
+        assert isinstance(records, list)
+        assert len(records) > 0
+
+        price_records = [r for r in records if r.get("source") == "yahoo_price"]
+        assert len(price_records) > 0
+
+        rec = price_records[0]
+        assert rec["ticker"] == "AAPL"
+        assert rec["close"] is not None
+        assert rec["volume"] is not None
+
+    def test_fetch_record_schema(self):
+        scraper = YahooFinanceScraper()
+        records = scraper.fetch("MSFT", lookback_hours=48)
+
+        required_keys = {"id", "source", "ticker", "timestamp", "text"}
+        for rec in records[:5]:
+            assert required_keys.issubset(rec.keys()), f"Missing keys: {required_keys - rec.keys()}"
+
+    def test_save_creates_json_file(self, tmp_path):
+        scraper = YahooFinanceScraper()
+        records = scraper.fetch("AAPL", lookback_hours=48)
+
+        if not records:
+            pytest.skip("No records fetched")
+
+
+        # Redirect raw dir for this test
+        import src.ingestion.base_scraper as bs
+
+        original = bs.RAW_DIR
+        bs.RAW_DIR = tmp_path
+        try:
+            scraper.save(records, source="yahoo_price", ticker="AAPL")
+            files = list((tmp_path / "yahoo_price").glob("AAPL_*.json"))
+            assert len(files) > 0
+        finally:
+            bs.RAW_DIR = original
 
 
 @pytest.mark.integration
 class TestNewsRSSIntegration:
     """Integration tests for News RSS scraper."""
-    
-    def test_fetch_real_news(self, tmp_path):
-        """Test: End-to-end ingestion of real news data."""
-        scraper = NewsRSSScraper(output_dir=str(tmp_path))
-        
-        # Fetch news for a test ticker
-        ticker = "AAPL"
-        data = scraper.fetch(ticker=ticker, max_articles=5)
-        
-        # Verify data structure
-        assert isinstance(data, list), "Should return list of articles"
-        
-        if len(data) > 0:  # News might not always be available
-            article = data[0]
-            required_fields = ['title', 'published', 'source', 'ticker']
-            for field in required_fields:
-                assert field in article, f"Article should have {field} field"
-            
-            assert article['ticker'] == ticker, "Ticker should match"
-    
-    def test_save_news_data(self, tmp_path):
-        """Test: Save fetched news data to JSON."""
-        scraper = NewsRSSScraper(output_dir=str(tmp_path))
-        
-        ticker = "GOOGL"
-        data = scraper.fetch(ticker=ticker, max_articles=3)
-        
-        if len(data) > 0:
-            scraper.save(data, ticker)
-            
-            # Verify file exists
-            output_file = tmp_path / f"news_{ticker}.json"
-            assert output_file.exists(), "Output file should be created"
-            
-            # Verify file content
-            with open(output_file, 'r') as f:
-                saved_data = json.load(f)
-            
-            assert len(saved_data) > 0, "File should contain data"
-            assert saved_data[0]['ticker'] == ticker, "Ticker should match"
+
+    def test_fetch_returns_list(self):
+        scraper = NewsRSSScraper()
+        records = scraper.fetch("AAPL", lookback_hours=48)
+
+        assert isinstance(records, list)
+
+    def test_fetch_record_schema(self):
+        scraper = NewsRSSScraper()
+        records = scraper.fetch("AAPL", lookback_hours=48)
+
+        required_keys = {"id", "source", "ticker", "timestamp"}
+        for rec in records[:5]:
+            assert required_keys.issubset(rec.keys())
+
+    def test_deduplication(self, tmp_path):
+        """Running fetch twice should not return duplicate IDs."""
+        import src.ingestion.base_scraper as bs
+
+        original = bs.RAW_DIR
+        bs.RAW_DIR = tmp_path
+        try:
+            scraper = NewsRSSScraper()
+            first = scraper.fetch("AAPL", lookback_hours=48)
+            second = scraper.fetch("AAPL", lookback_hours=48)
+
+            # All IDs from second run should already be seen
+            first_ids = {r["id"] for r in first}
+            second_ids = {r["id"] for r in second}
+            assert len(second_ids - first_ids) == 0, "Second run returned new IDs — dedup failed"
+        finally:
+            bs.RAW_DIR = original
 
 
 @pytest.mark.integration
 class TestAlphaVantageIntegration:
-    """Integration tests for Alpha Vantage scraper."""
-    
-    def test_fetch_real_news_with_sentiment(self, tmp_path):
-        """Test: End-to-end ingestion of news with sentiment from Alpha Vantage."""
-        scraper = AlphaVantageNewsScraper(output_dir=str(tmp_path))
-        
-        # Use a test ticker
-        ticker = "AAPL"
-        data = scraper.fetch(ticker=ticker, lookback_hours=24)
-        
-        # Verify data structure
-        assert isinstance(data, list), "Should return list of articles"
-        
-        if len(data) > 0:  # API might have rate limits
-            article = data[0]
-            required_fields = ['ticker', 'text', 'timestamp']
-            for field in required_fields:
-                assert field in article, f"Article should have {field} field"
-            
-            # Alpha Vantage provides sentiment scores
-            if 'av_sentiment_score' in article:
-                assert isinstance(article['av_sentiment_score'], (int, float, type(None))), \
-                    "Sentiment score should be numeric or None"
-    
-    def test_save_alphavantage_data(self, tmp_path):
-        """Test: Save Alpha Vantage data to JSON."""
-        scraper = AlphaVantageNewsScraper(output_dir=str(tmp_path))
-        
-        ticker = "MSFT"
-        data = scraper.fetch(ticker=ticker, lookback_hours=24)
-        
-        if len(data) > 0:
-            scraper.save(data, ticker)
-            
-            # Verify file exists
-            output_file = tmp_path / f"alphavantage_{ticker}.json"
-            assert output_file.exists(), "Output file should be created"
-            
-            # Verify file content
-            with open(output_file, 'r') as f:
-                saved_data = json.load(f)
-            
-            assert len(saved_data) > 0, "File should contain data"
+    """Integration tests for Alpha Vantage fundamentals scraper."""
+
+    def test_fetch_returns_list_even_without_key(self):
+        """Without ALPHAVANTAGE_API_KEY, fetch should return [] not raise."""
+        import os
+
+        env_key = os.environ.pop("ALPHAVANTAGE_API_KEY", None)
+        try:
+            scraper = AlphaVantageNewsScraper()
+            result = scraper.fetch("AAPL", lookback_hours=24)
+            assert isinstance(result, list)
+            assert len(result) == 0
+        finally:
+            if env_key:
+                os.environ["ALPHAVANTAGE_API_KEY"] = env_key
+
+    def test_fetch_with_key_returns_fundamentals(self):
+        import os
+
+        if not os.getenv("ALPHAVANTAGE_API_KEY"):
+            pytest.skip("ALPHAVANTAGE_API_KEY not set")
+
+        scraper = AlphaVantageNewsScraper()
+        records = scraper.fetch("AAPL", lookback_hours=24)
+
+        assert isinstance(records, list)
+        if records:
+            rec = records[0]
+            assert rec["ticker"] == "AAPL"
+            assert rec["source"] == "alphavantage_fundamentals"
 
 
 @pytest.mark.integration
 class TestIngestionPipeline:
-    """Integration tests for complete ingestion pipeline."""
-    
-    def test_end_to_end_ingestion(self, tmp_path):
-        """Test: Complete ingestion pipeline for a single ticker."""
-        ticker = "AAPL"
-        
-        # 1. Fetch price data
-        price_scraper = YahooFinanceScraper(output_dir=str(tmp_path))
-        end_date = datetime.now()
-        start_date = end_date - timedelta(days=7)
-        
-        price_data = price_scraper.fetch(
-            ticker=ticker,
-            start_date=start_date.strftime("%Y-%m-%d"),
-            end_date=end_date.strftime("%Y-%m-%d")
-        )
-        price_scraper.save(price_data, ticker)
-        
-        # 2. Fetch news data
-        news_scraper = NewsRSSScraper(output_dir=str(tmp_path))
-        news_data = news_scraper.fetch(ticker=ticker, max_articles=5)
-        if len(news_data) > 0:
-            news_scraper.save(news_data, ticker)
-        
-        # 3. Verify all data was collected
-        price_file = tmp_path / f"yahoo_{ticker}.parquet"
-        assert price_file.exists(), "Price data should be saved"
-        
-        # Verify price data quality
-        df = pd.read_parquet(price_file)
-        assert len(df) > 0, "Should have price records"
-        assert df['Close'].notna().all(), "Close prices should not be null"
-        assert (df['Volume'] >= 0).all(), "Volume should be non-negative"
-        
-        # If news was fetched, verify it
-        news_file = tmp_path / f"news_{ticker}.json"
-        if news_file.exists():
-            with open(news_file, 'r') as f:
-                news = json.load(f)
-            assert len(news) > 0, "Should have news articles"
-    
-    def test_multiple_tickers_ingestion(self, tmp_path):
-        """Test: Ingestion for multiple tickers."""
+    """Integration tests for multi-ticker ingestion."""
+
+    def test_multiple_tickers(self):
         tickers = ["AAPL", "MSFT"]
-        
-        price_scraper = YahooFinanceScraper(output_dir=str(tmp_path))
-        end_date = datetime.now()
-        start_date = end_date - timedelta(days=5)
-        
+        scraper = YahooFinanceScraper()
+
+        all_records = {}
         for ticker in tickers:
-            # Fetch and save price data
-            data = price_scraper.fetch(
-                ticker=ticker,
-                start_date=start_date.strftime("%Y-%m-%d"),
-                end_date=end_date.strftime("%Y-%m-%d")
-            )
-            price_scraper.save(data, ticker)
-            
-            # Verify file exists
-            price_file = tmp_path / f"yahoo_{ticker}.parquet"
-            assert price_file.exists(), f"Price data for {ticker} should be saved"
-        
-        # Verify all files were created
-        parquet_files = list(tmp_path.glob("yahoo_*.parquet"))
-        assert len(parquet_files) == len(tickers), \
-            f"Should have {len(tickers)} price data files"
+            records = scraper.fetch(ticker, lookback_hours=48)
+            all_records[ticker] = records
+            assert isinstance(records, list), f"Expected list for {ticker}"
+
+        # At least one ticker should have data
+        total = sum(len(v) for v in all_records.values())
+        assert total > 0, "No records fetched for any ticker"
+
+    def test_news_json_serializable(self):
+        scraper = NewsRSSScraper()
+        records = scraper.fetch("AAPL", lookback_hours=48)
+
+        for rec in records[:5]:
+            serialized = json.dumps(rec)
+            loaded = json.loads(serialized)
+            assert loaded["ticker"] == rec["ticker"]

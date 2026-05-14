@@ -4,349 +4,214 @@ Integration tests for model training pipeline.
 Tests model training with real data (1 epoch for speed).
 """
 
-import pytest
-
-# Skip all tests in this module - Phase 4 integration tests not ready for CI yet
-pytestmark = pytest.mark.skip(reason="Phase 4 integration tests - will be enabled when Phase 4 is complete")
-
-import torch
 import numpy as np
-from pathlib import Path
+import pytest
+import torch
 
 try:
-    from src.models.rnn_model import SimpleRNNModel
-    from src.models.lstm_model import LSTMModel
     from src.models.gru_model import GRUModel
+    from src.models.lstm_model import LSTMModel
+    from src.models.rnn_model import SimpleRNNModel
+
     MODELS_AVAILABLE = True
 except ImportError:
     MODELS_AVAILABLE = False
+
+# Skip until Phase 4 is wired in CI
+pytestmark = pytest.mark.skip(
+    reason="Phase 4 integration tests - will be enabled when Phase 4 is complete"
+)
+
+
+def _make_tensors(features_df, feature_cols, n_classes=2):
+    available = [c for c in feature_cols if c in features_df.columns]
+    if not available:
+        return None, None, available
+    X = torch.tensor(
+        features_df[available].values, dtype=torch.float32
+    ).unsqueeze(1)
+    labels = (
+        features_df["label"].values
+        if "label" in features_df.columns
+        else np.random.randint(0, n_classes, len(features_df))
+    )
+    y = torch.tensor(labels, dtype=torch.long)
+    return X, y, available
 
 
 @pytest.mark.integration
 class TestModelTrainingIntegration:
     """Integration tests for model training with real data."""
-    
+
     def test_train_rnn_one_epoch(self, fixture_features_data, tmp_path):
-        """Test: Model training (1 epoch) with RNN."""
-        # Prepare data
         features_df = fixture_features_data.copy()
-        
-        # Create simple train/test split
-        split_idx = int(len(features_df) * 0.8)
-        train_df = features_df[:split_idx]
-        test_df = features_df[split_idx:]
-        
-        if len(train_df) < 10 or len(test_df) < 5:
+        split = int(len(features_df) * 0.8)
+        train_df = features_df[:split]
+        if len(train_df) < 10:
             pytest.skip("Not enough data for training")
-        
-        # Prepare tensors (simplified)
-        feature_cols = ['close', 'volume', 'returns']
-        available_cols = [col for col in feature_cols if col in train_df.columns]
-        
-        if len(available_cols) == 0:
+
+        X, y, cols = _make_tensors(train_df, ["close", "volume", "returns"])
+        if X is None:
             pytest.skip("No numeric features available")
-        
-        X_train = torch.tensor(train_df[available_cols].values, dtype=torch.float32)
-        y_train = torch.tensor(train_df['label'].values if 'label' in train_df.columns else np.random.randint(0, 2, len(train_df)), dtype=torch.long)
-        
-        # Reshape for RNN (batch, seq_len, features)
-        X_train = X_train.unsqueeze(1)  # Add sequence dimension
-        
-        # Initialize model
-        input_size = len(available_cols)
-        model = SimpleRNNModel(
-            input_size=input_size,
-            hidden_size=32,
-            num_layers=1,
-            num_classes=2
-        )
-        
-        # Simple training loop
+
+        model = SimpleRNNModel(len(cols), 32, 1, 2, 0.0)
         optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
         criterion = torch.nn.CrossEntropyLoss()
-        
+
         model.train()
         optimizer.zero_grad()
-        outputs = model(X_train)
-        loss = criterion(outputs, y_train)
+        loss = criterion(model(X), y)
         loss.backward()
         optimizer.step()
-        
-        train_loss = loss.item()
-        
-        # Verify training
-        assert isinstance(train_loss, float), "Should return loss"
-        assert train_loss > 0, "Loss should be positive"
-        assert not np.isnan(train_loss), "Loss should not be NaN"
-    
+
+        assert isinstance(loss.item(), float)
+        assert loss.item() > 0
+        assert not np.isnan(loss.item())
+
     def test_train_lstm_one_epoch(self, fixture_features_data):
-        """Test: Model training (1 epoch) with LSTM."""
         features_df = fixture_features_data.copy()
-        
-        split_idx = int(len(features_df) * 0.8)
-        train_df = features_df[:split_idx]
-        
+        train_df = features_df[: int(len(features_df) * 0.8)]
         if len(train_df) < 10:
             pytest.skip("Not enough data for training")
-        
-        # Prepare data
-        feature_cols = ['close', 'volume']
-        available_cols = [col for col in feature_cols if col in train_df.columns]
-        
-        if len(available_cols) == 0:
+
+        X, y, cols = _make_tensors(train_df, ["close", "volume"])
+        if X is None:
             pytest.skip("No numeric features available")
-        
-        X_train = torch.tensor(train_df[available_cols].values, dtype=torch.float32).unsqueeze(1)
-        y_train = torch.tensor(train_df['label'].values if 'label' in train_df.columns else np.random.randint(0, 2, len(train_df)), dtype=torch.long)
-        
-        # Initialize LSTM model
-        model = LSTMModel(
-            input_size=len(available_cols),
-            hidden_size=32,
-            num_layers=1,
-            num_classes=2
-        )
-        
-        # Train
+
+        model = LSTMModel(len(cols), 32, 1, 2, 0.0)
         optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
         criterion = torch.nn.CrossEntropyLoss()
-        
+
         model.train()
         optimizer.zero_grad()
-        outputs = model(X_train)
-        loss = criterion(outputs, y_train)
+        loss = criterion(model(X), y)
         loss.backward()
         optimizer.step()
-        
-        train_loss = loss.item()
-        
-        # Verify
-        assert isinstance(train_loss, float), "Should return loss"
-        assert not np.isnan(train_loss), "Loss should not be NaN"
-    
+
+        assert not np.isnan(loss.item())
+
     def test_train_gru_one_epoch(self, fixture_features_data):
-        """Test: Model training (1 epoch) with GRU."""
         features_df = fixture_features_data.copy()
-        
-        split_idx = int(len(features_df) * 0.8)
-        train_df = features_df[:split_idx]
-        
+        train_df = features_df[: int(len(features_df) * 0.8)]
         if len(train_df) < 10:
             pytest.skip("Not enough data for training")
-        
-        # Prepare data
-        feature_cols = ['close', 'volume']
-        available_cols = [col for col in feature_cols if col in train_df.columns]
-        
-        if len(available_cols) == 0:
+
+        X, y, cols = _make_tensors(train_df, ["close", "volume"])
+        if X is None:
             pytest.skip("No numeric features available")
-        
-        X_train = torch.tensor(train_df[available_cols].values, dtype=torch.float32).unsqueeze(1)
-        y_train = torch.tensor(train_df['label'].values if 'label' in train_df.columns else np.random.randint(0, 2, len(train_df)), dtype=torch.long)
-        
-        # Initialize GRU model
-        model = GRUModel(
-            input_size=len(available_cols),
-            hidden_size=32,
-            num_layers=1,
-            num_classes=2
-        )
-        
-        # Train
+
+        model = GRUModel(len(cols), 32, 1, 2, 0.0)
         optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
         criterion = torch.nn.CrossEntropyLoss()
-        
+
         model.train()
         optimizer.zero_grad()
-        outputs = model(X_train)
-        loss = criterion(outputs, y_train)
+        loss = criterion(model(X), y)
         loss.backward()
         optimizer.step()
-        
-        train_loss = loss.item()
-        
-        # Verify
-        assert isinstance(train_loss, float), "Should return loss"
-        assert not np.isnan(train_loss), "Loss should not be NaN"
+
+        assert not np.isnan(loss.item())
 
 
 @pytest.mark.integration
 class TestModelEvaluationIntegration:
     """Integration tests for model evaluation."""
-    
+
     def test_evaluate_trained_model(self, fixture_features_data):
-        """Test: Model evaluation after training."""
         features_df = fixture_features_data.copy()
-        
-        split_idx = int(len(features_df) * 0.8)
-        train_df = features_df[:split_idx]
-        test_df = features_df[split_idx:]
-        
+        split = int(len(features_df) * 0.8)
+        train_df = features_df[:split]
+        test_df = features_df[split:]
+
         if len(train_df) < 10 or len(test_df) < 5:
             pytest.skip("Not enough data for evaluation")
-        
-        # Prepare data
-        feature_cols = ['close', 'volume']
-        available_cols = [col for col in feature_cols if col in train_df.columns]
-        
-        if len(available_cols) == 0:
+
+        X_train, y_train, cols = _make_tensors(train_df, ["close", "volume"])
+        if X_train is None:
             pytest.skip("No numeric features available")
-        
-        X_train = torch.tensor(train_df[available_cols].values, dtype=torch.float32).unsqueeze(1)
-        y_train = torch.tensor(train_df['label'].values if 'label' in train_df.columns else np.random.randint(0, 2, len(train_df)), dtype=torch.long)
-        
-        X_test = torch.tensor(test_df[available_cols].values, dtype=torch.float32).unsqueeze(1)
-        y_test = torch.tensor(test_df['label'].values if 'label' in test_df.columns else np.random.randint(0, 2, len(test_df)), dtype=torch.long)
-        
-        # Train model
-        model = SimpleRNNModel(
-            input_size=len(available_cols),
-            hidden_size=32,
-            num_layers=1,
-            num_classes=2
+
+        X_test = torch.tensor(test_df[cols].values, dtype=torch.float32).unsqueeze(1)
+        labels = (
+            test_df["label"].values
+            if "label" in test_df.columns
+            else np.random.randint(0, 2, len(test_df))
         )
-        
+        y_test = torch.tensor(labels, dtype=torch.long)
+
+        model = SimpleRNNModel(len(cols), 32, 1, 2, 0.0)
         optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
         criterion = torch.nn.CrossEntropyLoss()
-        
+
         model.train()
         optimizer.zero_grad()
-        outputs = model(X_train)
-        loss = criterion(outputs, y_train)
-        loss.backward()
+        criterion(model(X_train), y_train).backward()
         optimizer.step()
-        
-        # Evaluate
+
         model.eval()
         with torch.no_grad():
-            test_outputs = model(X_test)
-            test_loss = criterion(test_outputs, y_test)
-            predictions = torch.argmax(test_outputs, dim=1)
-            accuracy = (predictions == y_test).float().mean()
-        
-        # Verify metrics
-        assert test_loss.item() >= 0, "Loss should be non-negative"
-        assert 0 <= accuracy.item() <= 1, "Accuracy should be in [0, 1]"
-    
-    def test_model_prediction(self, fixture_features_data):
-        """Test: Model prediction on new data."""
+            test_loss = criterion(model(X_test), y_test)
+            preds = torch.argmax(model(X_test), dim=1)
+            acc = (preds == y_test).float().mean()
+
+        assert test_loss.item() >= 0
+        assert 0 <= acc.item() <= 1
+
+    def test_model_prediction_consistency(self, fixture_features_data):
         features_df = fixture_features_data.copy()
-        
-        if len(features_df) < 10:
+        if len(features_df) < 5:
             pytest.skip("Not enough data")
-        
-        # Prepare data
-        feature_cols = ['close', 'volume']
-        available_cols = [col for col in feature_cols if col in features_df.columns]
-        
-        if len(available_cols) == 0:
+
+        X, _, cols = _make_tensors(features_df.head(5), ["close", "volume"])
+        if X is None:
             pytest.skip("No numeric features available")
-        
-        X = torch.tensor(features_df[available_cols].values, dtype=torch.float32).unsqueeze(1)
-        
-        # Create and train model
-        model = SimpleRNNModel(
-            input_size=len(available_cols),
-            hidden_size=32,
-            num_layers=1,
-            num_classes=2
-        )
-        
-        # Make predictions (even without training)
+
+        model = SimpleRNNModel(len(cols), 32, 1, 2, 0.0)
         model.eval()
         with torch.no_grad():
-            predictions = model(X)
-        
-        # Verify predictions
-        assert predictions.shape[0] == len(X), "Should predict for all samples"
-        assert predictions.shape[1] == 2, "Should have 2 class probabilities"
-        
-        # Verify probabilities sum to ~1 (after softmax)
-        probs = torch.softmax(predictions, dim=1)
-        assert torch.allclose(probs.sum(dim=1), torch.ones(len(X)), atol=1e-5), \
-            "Probabilities should sum to 1"
+            out1 = model(X)
+            out2 = model(X)
+
+        assert torch.allclose(out1, out2, atol=1e-6)
 
 
 @pytest.mark.integration
 class TestTrainingPipeline:
     """Integration tests for complete training pipeline."""
-    
+
     def test_end_to_end_training_pipeline(self, fixture_features_data, tmp_path):
-        """Test: Complete training pipeline from features to saved model."""
         features_df = fixture_features_data.copy()
-        
-        split_idx = int(len(features_df) * 0.8)
-        train_df = features_df[:split_idx]
-        test_df = features_df[split_idx:]
-        
+        split = int(len(features_df) * 0.8)
+        train_df = features_df[:split]
+        test_df = features_df[split:]
+
         if len(train_df) < 10 or len(test_df) < 5:
             pytest.skip("Not enough data")
-        
-        # 1. Prepare data
-        feature_cols = ['close', 'volume']
-        available_cols = [col for col in feature_cols if col in train_df.columns]
-        
-        if len(available_cols) == 0:
+
+        X_train, y_train, cols = _make_tensors(train_df, ["close", "volume"])
+        if X_train is None:
             pytest.skip("No numeric features available")
-        
-        X_train = torch.tensor(train_df[available_cols].values, dtype=torch.float32).unsqueeze(1)
-        y_train = torch.tensor(train_df['label'].values if 'label' in train_df.columns else np.random.randint(0, 2, len(train_df)), dtype=torch.long)
-        
-        X_test = torch.tensor(test_df[available_cols].values, dtype=torch.float32).unsqueeze(1)
-        y_test = torch.tensor(test_df['label'].values if 'label' in test_df.columns else np.random.randint(0, 2, len(test_df)), dtype=torch.long)
-        
-        # 2. Initialize model
-        model = SimpleRNNModel(
-            input_size=len(available_cols),
-            hidden_size=32,
-            num_layers=1,
-            num_classes=2
-        )
-        
-        # 3. Train
+
+        X_test = torch.tensor(test_df[cols].values, dtype=torch.float32).unsqueeze(1)
+
+        model = SimpleRNNModel(len(cols), 32, 1, 2, 0.0)
         optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
         criterion = torch.nn.CrossEntropyLoss()
-        
+
         model.train()
         optimizer.zero_grad()
-        outputs = model(X_train)
-        loss = criterion(outputs, y_train)
-        loss.backward()
+        train_loss = criterion(model(X_train), y_train)
+        train_loss.backward()
         optimizer.step()
-        
-        train_loss = loss.item()
-        
-        # 4. Evaluate
-        model.eval()
-        with torch.no_grad():
-            test_outputs = model(X_test)
-            test_loss = criterion(test_outputs, y_test)
-            predictions = torch.argmax(test_outputs, dim=1)
-            accuracy = (predictions == y_test).float().mean()
-        
-        # 5. Save model
+
         model_path = tmp_path / "model.pt"
         torch.save(model.state_dict(), model_path)
-        
-        # 6. Verify saved model
-        assert model_path.exists(), "Model file should be created"
-        
-        # 7. Load and verify
-        loaded_model = SimpleRNNModel(
-            input_size=len(available_cols),
-            hidden_size=32,
-            num_layers=1,
-            num_classes=2
-        )
-        loaded_model.load_state_dict(torch.load(model_path))
-        
-        # 8. Verify loaded model works
-        loaded_model.eval()
+        assert model_path.exists()
+
+        loaded = SimpleRNNModel(len(cols), 32, 1, 2, 0.0)
+        loaded.load_state_dict(torch.load(model_path))
+        loaded.eval()
         with torch.no_grad():
-            predictions = loaded_model(X_test[:5])
-        
-        assert predictions.shape[0] == 5, "Should predict for 5 samples"
-        
-        # Verify metrics
-        assert train_loss > 0, "Should have training loss"
-        assert 0 <= accuracy.item() <= 1, "Should have valid accuracy"
+            preds = torch.argmax(loaded(X_test), dim=1)
+
+        assert preds.shape[0] == len(test_df)
+        assert train_loss.item() > 0

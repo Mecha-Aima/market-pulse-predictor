@@ -55,7 +55,7 @@ class StockTwitsScraper(BaseScraper):
             records = []
             now = datetime.now(timezone.utc)
             for m in _ROW_RE.finditer(search_html):
-                raw_date = _STRIP_TAGS.sub("", m.group(1)).strip()
+                _STRIP_TAGS.sub("", m.group(1)).strip()  # date field, not yet used
                 url = m.group(2).strip()
                 title = _STRIP_TAGS.sub("", m.group(3)).strip()
 

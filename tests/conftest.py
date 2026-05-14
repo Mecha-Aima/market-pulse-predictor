@@ -1,16 +1,16 @@
 from pathlib import Path
-from typing import Dict, Any
+from typing import Any, Dict
 
 import pytest
 
 from tests.fixtures import (
+    get_available_tickers,
     load_all_fixtures,
-    load_price_data,
-    load_news_data,
-    load_stocktwits_data,
-    load_sentiment_data,
     load_features_data,
-    get_available_tickers
+    load_news_data,
+    load_price_data,
+    load_sentiment_data,
+    load_stocktwits_data,
 )
 
 # Configure pytest-asyncio

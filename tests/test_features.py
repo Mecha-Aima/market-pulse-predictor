@@ -111,11 +111,13 @@ def test_label_direction_correct() -> None:
 
 def test_volatility_spike_detection() -> None:
     builder = TimeSeriesBuilder(sequence_length=3)
-    start = datetime.now(timezone.utc).replace(minute=0, second=0, microsecond=0)
-    closes = [100, 100.1, 100.2, 100.3, 110.0, 110.5, 110.7, 111.0]
+    # builder aggregates by date_bucket (daily), so use daily timestamps
+    # 10 stable days then a large jump to establish low-volatility baseline
+    base = datetime.now(timezone.utc).replace(hour=16, minute=0, second=0, microsecond=0)
+    closes = [100.0, 100.0, 100.0, 100.0, 100.0, 100.0, 100.0, 100.0, 100.0, 100.0, 120.0, 120.0]
     records = []
     for offset, close_value in enumerate(closes):
-        timestamp = start + timedelta(hours=offset)
+        timestamp = base + timedelta(days=offset)
         records.append(
             make_processed_record(
                 timestamp=timestamp,
@@ -126,7 +128,7 @@ def test_volatility_spike_detection() -> None:
         )
         records.append(
             make_processed_record(
-                timestamp=start + timedelta(hours=offset),
+                timestamp=timestamp,
                 source="yahoo_price",
                 text=None,
                 sentiment_label=None,

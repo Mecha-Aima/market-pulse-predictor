@@ -18,7 +18,9 @@ class TimeSeriesBuilder:
 
     def aggregate_sentiment(self, processed_frame: pd.DataFrame) -> pd.DataFrame:
         frame = processed_frame.copy()
-        frame["date_bucket"] = pd.to_datetime(frame["timestamp"], format="ISO8601", utc=True).dt.date
+        frame["date_bucket"] = (
+            pd.to_datetime(frame["timestamp"], format="ISO8601", utc=True).dt.date
+        )
         frame = frame[frame["text"].notna() & frame["sentiment_label"].notna()].copy()
         if frame.empty:
             return pd.DataFrame(
@@ -42,7 +44,8 @@ class TimeSeriesBuilder:
             .reset_index(drop=True)
         )
         # Drop any stray index columns produced by groupby+apply
-        aggregated = aggregated.drop(columns=[c for c in aggregated.columns if c in {"level_0", "level_1", "level_2", "index"}])
+        stray = {"level_0", "level_1", "level_2", "index"}
+        aggregated = aggregated.drop(columns=[c for c in aggregated.columns if c in stray])
         return aggregated
 
     def build_feature_frame(self, processed_frame: pd.DataFrame) -> pd.DataFrame:
@@ -224,7 +227,9 @@ class TimeSeriesBuilder:
                 "total_mentions": int(len(group)),
                 "stocktwits_mentions": int(group["source"].isin(["stocktwits"]).sum()),
                 "news_mentions": int(
-                    group["source"].isin(["news_rss", "yahoo_news", "alphavantage_news", "finnhub"]).sum()
+                    group["source"]
+                    .isin(["news_rss", "yahoo_news", "alphavantage_news", "finnhub"])
+                    .sum()
                 ),
             }
         )

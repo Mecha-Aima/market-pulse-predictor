@@ -56,7 +56,9 @@ class AlphaVantageNewsScraper(BaseScraper):
             return []  # Soft-fail — don't crash the whole pipeline
 
         if not payload.get("Symbol"):
-            LOGGER.debug("AlphaVantage OVERVIEW empty for %s. Keys: %s", ticker, list(payload.keys()))
+            LOGGER.debug(
+                "AlphaVantage OVERVIEW empty for %s. Keys: %s", ticker, list(payload.keys())
+            )
             return []
 
         now = datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")

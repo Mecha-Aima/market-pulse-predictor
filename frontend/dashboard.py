@@ -1,11 +1,9 @@
-import streamlit as st
-import plotly.graph_objects as go
-import plotly.express as px
-import pandas as pd
-from datetime import datetime
-import time
 import sys
+import time
 from pathlib import Path
+
+import pandas as pd
+import streamlit as st
 
 # Add parent directory to path for imports
 sys.path.insert(0, str(Path(__file__).parent.parent))
@@ -87,7 +85,9 @@ if section == "Live Predictions":
                     )
                 
                 # Metadata
-                st.caption(f"Model: {prediction['model_name']} | Timestamp: {prediction['timestamp']}")
+                model_name = prediction["model_name"]
+                ts = prediction["timestamp"]
+                st.caption(f"Model: {model_name} | Timestamp: {ts}")
         
         # Auto-refresh countdown
         if auto_refresh:

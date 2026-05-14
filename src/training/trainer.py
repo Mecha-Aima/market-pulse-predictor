@@ -30,7 +30,9 @@ class Trainer:
         self.device = device
         self.patience = patience
         self.task_name = task_name
-        self.optimizer = torch.optim.Adam(self.model.parameters(), lr=learning_rate, weight_decay=weight_decay)
+        self.optimizer = torch.optim.Adam(
+            self.model.parameters(), lr=learning_rate, weight_decay=weight_decay
+        )
         self.loss_fn = self._build_loss()
 
     def train(

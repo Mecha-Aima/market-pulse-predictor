@@ -1,9 +1,5 @@
-import pytest
-
-# Skip all tests in this module - Phase 4 tests not ready for CI yet
-pytestmark = pytest.mark.skip(reason="Phase 4 training tests - will be enabled when Phase 4 is complete")
-
 import mlflow
+import pytest
 import torch
 from torch.utils.data import DataLoader, TensorDataset
 
@@ -11,9 +7,15 @@ try:
     from src.models.rnn_model import SimpleRNNModel
     from src.training.evaluator import Evaluator
     from src.training.trainer import Trainer
+
     TRAINING_AVAILABLE = True
 except ImportError:
     TRAINING_AVAILABLE = False
+
+# Skip all tests in this module until training dependencies are fully wired in CI
+pytestmark = pytest.mark.skip(
+    reason="Phase 4 training tests - will be enabled when Phase 4 is complete"
+)
 
 
 def test_trainer_runs_one_epoch(tmp_path, monkeypatch) -> None:

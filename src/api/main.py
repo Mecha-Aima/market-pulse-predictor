@@ -1,18 +1,18 @@
-import os
 import logging
+import os
+from contextlib import asynccontextmanager
 from datetime import datetime
 from pathlib import Path
+
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from contextlib import asynccontextmanager
 
+from src.api.model_loader import registry
 from src.api.schemas import (
+    HealthResponse,
     PredictionRequest,
     PredictionResponse,
-    HealthResponse,
-    ModelComparisonResponse
 )
-from src.api.model_loader import registry
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)

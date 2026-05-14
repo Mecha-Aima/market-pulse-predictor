@@ -5,9 +5,10 @@ Provides utilities for loading test data fixtures for integration testing.
 """
 
 import json
-import pandas as pd
 from pathlib import Path
-from typing import List, Dict, Any
+from typing import Any, Dict, List
+
+import pandas as pd
 
 # Fixture paths
 FIXTURES_DIR = Path(__file__).parent

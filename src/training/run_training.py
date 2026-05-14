@@ -5,14 +5,11 @@ from datetime import datetime, timezone
 from pathlib import Path
 from subprocess import run
 
-from dotenv import load_dotenv
-
-load_dotenv()
-
 import mlflow
 import numpy as np
 import torch
 import yaml
+from dotenv import load_dotenv
 from mlflow.tracking import MlflowClient
 from torch.utils.data import DataLoader, TensorDataset
 
@@ -21,6 +18,8 @@ from src.models.lstm_model import LSTMModel
 from src.models.rnn_model import SimpleRNNModel
 from src.training.evaluator import Evaluator
 from src.training.trainer import Trainer
+
+load_dotenv()
 
 MODEL_FACTORIES = {
     "rnn": SimpleRNNModel,

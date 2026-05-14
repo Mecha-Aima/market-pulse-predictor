@@ -6,7 +6,6 @@ Use this ONLY for testing the pipeline, not for production models.
 For production training, use Colab with GPU (see TRAINING_GUIDE.md).
 """
 
-import os
 from pathlib import Path
 
 import yaml
@@ -77,7 +76,7 @@ def main():
     # Restore original params
     if backup_path.exists():
         backup_path.rename(params_path)
-        print(f"\n✅ Restored original params.yaml")
+        print("\n✅ Restored original params.yaml")
 
     print("\n" + "=" * 60)
     print("MINIMAL TRAINING COMPLETE")

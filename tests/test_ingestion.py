@@ -120,11 +120,11 @@ def test_yahoo_rate_limit_error_triggers_retry(monkeypatch) -> None:
                 raise rate_limit_error("rate limited")
             return history
 
-    monkeypatch.setattr(
-        yahoo_finance,
-        "yf",
-        SimpleNamespace(Ticker=FakeTicker, exceptions=SimpleNamespace(YFRateLimitError=rate_limit_error)),
+    fake_yf = SimpleNamespace(
+        Ticker=FakeTicker,
+        exceptions=SimpleNamespace(YFRateLimitError=rate_limit_error),
     )
+    monkeypatch.setattr(yahoo_finance, "yf", fake_yf)
     monkeypatch.setattr(yahoo_finance.YahooFinanceScraper, "_build_session", lambda self: object())
     monkeypatch.setattr(yahoo_finance, "sleep", lambda _: None)
 

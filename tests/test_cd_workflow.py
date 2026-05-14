@@ -5,9 +5,10 @@ These tests verify that the GitHub Actions CD workflow is properly configured
 following TDD principles - tests are written first, then the workflow is implemented.
 """
 
-import yaml
 from pathlib import Path
+
 import pytest
+import yaml
 
 
 @pytest.fixture
@@ -87,7 +88,7 @@ def test_workflow_uses_aws_credentials_secret(cd_workflow_content):
     
     # Check if any job references AWS credentials
     has_aws_key = False
-    for job_name, job_config in jobs.items():
+    for _job_name, job_config in jobs.items():
         steps = job_config.get('steps', [])
         env = job_config.get('env', {})
         
@@ -116,7 +117,7 @@ def test_workflow_uses_aws_secret_access_key_secret(cd_workflow_content):
     
     # Check if any job references AWS secret key
     has_aws_secret = False
-    for job_name, job_config in jobs.items():
+    for _job_name, job_config in jobs.items():
         steps = job_config.get('steps', [])
         env = job_config.get('env', {})
         
@@ -145,7 +146,7 @@ def test_workflow_uses_ecr_repository_secret(cd_workflow_content):
     
     # Check if any job references ECR repository
     has_ecr = False
-    for job_name, job_config in jobs.items():
+    for _job_name, job_config in jobs.items():
         steps = job_config.get('steps', [])
         env = job_config.get('env', {})
         
@@ -181,7 +182,12 @@ def test_workflow_uses_ec2_ssh_key_secret(cd_workflow_content):
         step_run = step.get('run', '')
         step_with = step.get('with', {})
         
-        if 'SSH' in str(step_env).upper() or 'SSH' in step_run.upper() or 'SSH' in str(step_with).upper():
+        ssh_found = (
+            'SSH' in str(step_env).upper()
+            or 'SSH' in step_run.upper()
+            or 'SSH' in str(step_with).upper()
+        )
+        if ssh_found:
             has_ssh_key = True
             break
     
@@ -196,10 +202,15 @@ def test_build_job_builds_api_docker_image(cd_workflow_content):
     
     # Check for Docker build commands
     run_commands = [s.get('run', '') for s in steps if 'run' in s]
-    docker_build_commands = [cmd for cmd in run_commands if 'docker build' in cmd.lower() or 'docker buildx' in cmd.lower()]
+    docker_build_commands = [
+        cmd for cmd in run_commands
+        if 'docker build' in cmd.lower() or 'docker buildx' in cmd.lower()
+    ]
     
     # Check if API Dockerfile is referenced
-    has_api_build = any('Dockerfile.api' in cmd or 'api' in cmd.lower() for cmd in docker_build_commands)
+    has_api_build = any(
+        'Dockerfile.api' in cmd or 'api' in cmd.lower() for cmd in docker_build_commands
+    )
     
     assert has_api_build, \
         "Build job should build API Docker image from docker/Dockerfile.api"
@@ -212,10 +223,16 @@ def test_build_job_builds_dashboard_docker_image(cd_workflow_content):
     
     # Check for Docker build commands
     run_commands = [s.get('run', '') for s in steps if 'run' in s]
-    docker_build_commands = [cmd for cmd in run_commands if 'docker build' in cmd.lower() or 'docker buildx' in cmd.lower()]
+    docker_build_commands = [
+        cmd for cmd in run_commands
+        if 'docker build' in cmd.lower() or 'docker buildx' in cmd.lower()
+    ]
     
     # Check if Dashboard Dockerfile is referenced
-    has_dashboard_build = any('Dockerfile.dashboard' in cmd or 'dashboard' in cmd.lower() for cmd in docker_build_commands)
+    has_dashboard_build = any(
+        'Dockerfile.dashboard' in cmd or 'dashboard' in cmd.lower()
+        for cmd in docker_build_commands
+    )
     
     assert has_dashboard_build, \
         "Build job should build Dashboard Docker image from docker/Dockerfile.dashboard"
@@ -277,7 +294,10 @@ def test_deploy_job_runs_docker_compose(cd_workflow_content):
     # Check for docker-compose commands
     run_commands = [s.get('run', '') for s in steps if 'run' in s]
     
-    has_compose = any('docker-compose' in cmd.lower() or 'docker compose' in cmd.lower() for cmd in run_commands)
+    has_compose = any(
+        'docker-compose' in cmd.lower() or 'docker compose' in cmd.lower()
+        for cmd in run_commands
+    )
     
     assert has_compose, \
         "Deploy job should run docker-compose to update services"

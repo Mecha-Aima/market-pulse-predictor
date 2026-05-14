@@ -84,7 +84,7 @@ def run_all_sources(lookback_hours: int) -> dict[str, int]:
     print("  ⚙  TechnicalsEnricher: computing RSI, MACD, BB, ATR, OBV from OHLCV...")
     try:
         tech_counts = TechnicalsEnricher().run()
-        for ticker, count in tech_counts.items():
+        for _ticker, count in tech_counts.items():
             record_counts["technicals"] += count
             results["technicals"] += 1
     except Exception as e:

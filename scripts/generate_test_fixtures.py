@@ -7,10 +7,11 @@ for integration tests without requiring real API calls or large data files.
 """
 
 import json
-import pandas as pd
-import numpy as np
 from datetime import datetime, timedelta
 from pathlib import Path
+
+import numpy as np
+import pandas as pd
 
 # Set random seed for reproducibility
 np.random.seed(42)
@@ -173,20 +174,20 @@ def main():
         print(f"\nGenerating fixtures for {ticker}...")
         
         # Raw data
-        print(f"  • Price data...")
+        print("  • Price data...")
         price_df = generate_price_data(ticker, days=30)
         price_path = RAW_DIR / f"yahoo_{ticker}.parquet"
         price_df.to_parquet(price_path, index=False)
         total_size += price_path.stat().st_size
         
-        print(f"  • News data...")
+        print("  • News data...")
         news_data = generate_news_data(ticker, count=20)
         news_path = RAW_DIR / f"news_{ticker}.json"
         with open(news_path, 'w') as f:
             json.dump(news_data, f, indent=2)
         total_size += news_path.stat().st_size
         
-        print(f"  • StockTwits data...")
+        print("  • StockTwits data...")
         stocktwits_data = generate_stocktwits_data(ticker, count=15)
         stocktwits_path = RAW_DIR / f"stocktwits_{ticker}.json"
         with open(stocktwits_path, 'w') as f:
@@ -194,14 +195,14 @@ def main():
         total_size += stocktwits_path.stat().st_size
         
         # Processed data
-        print(f"  • Sentiment data...")
+        print("  • Sentiment data...")
         sentiment_df = generate_sentiment_data(ticker, count=30)
         sentiment_path = PROCESSED_DIR / f"sentiment_{ticker}.parquet"
         sentiment_df.to_parquet(sentiment_path, index=False)
         total_size += sentiment_path.stat().st_size
         
         # Features
-        print(f"  • Feature data...")
+        print("  • Feature data...")
         features_df = generate_features_data(ticker, count=25)
         features_path = FEATURES_DIR / f"features_{ticker}.parquet"
         features_df.to_parquet(features_path, index=False)
@@ -237,7 +238,12 @@ def main():
     print(f"  Total size: {metadata['total_size_mb']} MB")
     print(f"  Location: {FIXTURES_DIR}")
     print(f"  Tickers: {', '.join(tickers)}")
-    print(f"  Files: {len(metadata['files']['raw']) + len(metadata['files']['processed']) + len(metadata['files']['features'])}")
+    total_files = (
+        len(metadata['files']['raw'])
+        + len(metadata['files']['processed'])
+        + len(metadata['files']['features'])
+    )
+    print(f"  Files: {total_files}")
 
 
 if __name__ == '__main__':

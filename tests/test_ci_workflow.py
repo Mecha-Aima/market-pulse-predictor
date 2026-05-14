@@ -5,9 +5,10 @@ These tests verify that the GitHub Actions CI workflow is properly configured
 following TDD principles - tests are written first, then the workflow is implemented.
 """
 
-import yaml
 from pathlib import Path
+
 import pytest
+import yaml
 
 
 @pytest.fixture
@@ -146,7 +147,7 @@ def test_workflow_caches_dependencies(ci_workflow_content):
     
     # Check if any job uses caching
     has_cache = False
-    for job_name, job_config in jobs.items():
+    for _job_name, job_config in jobs.items():
         steps = job_config.get('steps', [])
         cache_steps = [s for s in steps if s.get('uses', '').startswith('actions/cache')]
         if cache_steps:
@@ -195,10 +196,13 @@ def test_workflow_installs_dependencies(ci_workflow_content):
     
     # Check if any job installs requirements
     has_install = False
-    for job_name, job_config in jobs.items():
+    for _job_name, job_config in jobs.items():
         steps = job_config.get('steps', [])
         run_commands = [s.get('run', '') for s in steps if 'run' in s]
-        install_commands = [cmd for cmd in run_commands if 'pip install' in cmd and 'requirements.txt' in cmd]
+        install_commands = [
+            cmd for cmd in run_commands
+            if 'pip install' in cmd and 'requirements.txt' in cmd
+        ]
         if install_commands:
             has_install = True
             break
@@ -214,7 +218,10 @@ def test_workflow_downloads_nltk_data(ci_workflow_content):
     
     # Check for NLTK download in run commands
     run_commands = [s.get('run', '') for s in steps if 'run' in s]
-    nltk_commands = [cmd for cmd in run_commands if 'nltk' in cmd.lower() and 'download' in cmd.lower()]
+    nltk_commands = [
+        cmd for cmd in run_commands
+        if 'nltk' in cmd.lower() and 'download' in cmd.lower()
+    ]
     
     assert len(nltk_commands) > 0, \
         "Test job should download NLTK vader_lexicon data"

@@ -43,7 +43,9 @@ class NewsRSSScraper(BaseScraper):
         records: list[dict] = []
         for url in self._feed_urls(ticker):
             try:
-                response = httpx.get(url, headers=self._HEADERS, timeout=20.0, follow_redirects=True)
+                response = httpx.get(
+                    url, headers=self._HEADERS, timeout=20.0, follow_redirects=True
+                )
                 response.raise_for_status()
                 feed = feedparser.parse(response.content)
             except Exception:
